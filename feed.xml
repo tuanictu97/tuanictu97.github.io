@@ -1,0 +1,931 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="3.8.7">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" hreflang="en" /><updated>2020-07-04T19:15:25+00:00</updated><id>/feed.xml</id><title type="html">Hà Anh Tuấn Blog</title><subtitle>Hà Anh Tuấn Blog
+</subtitle><author><name>Hà Anh TTuấn</name></author><entry><title type="html">Tìm hiểu DevOps và áp dụng thực tế Circle CI</title><link href="/2019/10/01/tim-hieu-devops-va-ap-dung-circle-ci.html" rel="alternate" type="text/html" title="Tìm hiểu DevOps và áp dụng thực tế Circle CI" /><published>2019-10-01T00:00:00+00:00</published><updated>2019-10-01T00:00:00+00:00</updated><id>/2019/10/01/tim-hieu-devops-va-ap-dung-circle-ci</id><content type="html" xml:base="/2019/10/01/tim-hieu-devops-va-ap-dung-circle-ci.html">&lt;p&gt;Trong quá trình phát triển phần mềm, CI/CD có vai trò rất quan trọng trong việc đảm bảo phát triển phần mềm liên tục, mà vẫn giữ được chất lượng sản phẩm tốt. Trong bài viết này tôi sẽ trình bày những hiểu biết về DevOps và áp dụng Circle CI để:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Test tự động (Java)&lt;/li&gt;
+  &lt;li&gt;Push kết quả lên kênh chat trên Slack&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;1-tìm-hiểu-về-devops&quot;&gt;1. Tìm hiểu về DevOps&lt;/h2&gt;
+&lt;h3 id=&quot;11-giới-thiệu-về-devops&quot;&gt;1.1. Giới thiệu về DevOps&lt;/h3&gt;
+&lt;p&gt;DevOps là gì? DevOps là viết tắt của Development (Dev) và Operations (Ops). DevOps là một văn hóa làm việc kết hợp giữa kỹ sư phát triển phần mềm (dev) với bộ phận operator (kỹ sư hệ thống, nhân viên bảo mật, kỹ sư mạng, kỹ sư hạ tầng,…) nhằm mục đích rút ngắn vòng đời phát triển sản phẩm (SDLC).&lt;/p&gt;
+
+&lt;p&gt;DevOps không phải là một Tools hỗ trợ làm việc, mà là một phương pháp làm việc cần đến sự hỗ trợ của các Tools. Ngoài ra, không có bất cứ một tiêu chuẩn nào để những những người sử dụng phương pháp DevOps để tuân theo. Nó chỉ đơn giản là một văn hóa, một cách làm việc kết hợp giữa dev và nhân viên operations thay vì làm việc một mình hay chỉ một team độc lập nào đó.&lt;/p&gt;
+
+&lt;p&gt;Dưới đây sẽ giới thiệu về những điều cần biết để áp dụng DevOps, bao gồm:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;DevOps Culture&lt;/strong&gt;: văn hóa làm việc kết hợp giữa Dev và Ops&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;DevOps Practices&lt;/strong&gt;: cách để thực hiện DevOps&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;DevOps Tools&lt;/strong&gt;: những Tools cần để thực hiện DevOps&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;DevOps và Cloud&lt;/strong&gt;: mối quan hệ giữa DevOps và cloud&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;12-devops-culture&quot;&gt;1.2. DevOps Culture&lt;/h3&gt;
+&lt;p&gt;Với cách làm việc truyền thống trước đây - dev làm việc riêng và operations làm việc riêng, họ sẽ có mục tiêu công việc khác nhau. Nếu như mục tiêu của dev là xây dựng function đúng với requirement và release cho khách hàng càng nhanh càng tốt thì mục tiêu của operations là tạo ra một hệ thống ổn định. Trong một hoàn cảnh nào đó, hai mục tiêu này sẽ đối lập nhau, function có thể chạy tốt lúc release nhưng sau một thời gian có thể xuất hiện nhiều lỗi hoặc chạy chậm. Hoặc một sản phẩm suy nghĩ nhiều về maintaince system sẽ làm chậm thời gian release. Vì thế, DevOps được sinh ra với ý tưởng là kết hợp Dev và Ops mới một mục tiêu chung là “Speed and Stability” - Tốc độ và ổn định.&lt;/p&gt;
+
+&lt;p&gt;Vậy khi có 1 team DevOps, những mục tiêu đạt đến cụ thể như sau:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Fast time - to market (TTM)&lt;/strong&gt;: code nhanh, deploy nhanh.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Few production failures&lt;/strong&gt;: khi sản phẩm được đảm bảo về tính ổn định ngay từ đầu thì lỗi sẽ ít xảy ra hơn.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Immediate recovery from failures&lt;/strong&gt;: không may nếu xảy ra lỗi, vì chúng ta có 1 team đầy đủ dev và ops nên có thể nhanh chóng nhận định nguyên nhân lỗi là do program hay do cấu trúc hệ thống,… và có thể nhanh chóng giải quyết vấn đề ngay lập tức.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Trong DevOps culture, cả dev và operations đều phải quan tâm đến tính ổn định và tốc độ của sản phẩm.Vì thế, dev và operations sẽ phải làm việc cùng nhau, sử dụng những tools kiểm tra tốc độ và tính ổn định của sản phẩm, nhờ vậy mà có thể tạo ra những sản phẩm tốt hơn.&lt;/p&gt;
+&lt;h3 id=&quot;13-devops-concepts-và-practices&quot;&gt;1.3. DevOps Concepts và Practices&lt;/h3&gt;
+&lt;h4 id=&quot;131-build-automation&quot;&gt;1.3.1. Build Automation&lt;/h4&gt;
+&lt;p&gt;Build Automation là một quy trình tự động để chuẩn bị source code deploy lên môi trường bằng cách sử dụng script hoặc tool. Tùy vào ngôn ngữ được sử dụng mà cần phải compile, transform hoặc thực hiện unit test,… đối với code. Thông thường build automation cũng giống như việc chạy một command - line tool để chạy doạn code đã được viết script hoặc được setting trong file config. Việc build automation không nên bị phụ thuộc vào IDE cũng như những config của máy tính. Nó có nghĩa là code của bạn có thể được build trên bất cứ PC nào, dù là của bạn hay của người khác.&lt;/p&gt;
+
+&lt;p&gt;Vậy tại sao phải build automation? Trước tiên, build automation sẽ giúp tiết kiệm thời gian, có thể handle được những task cần phải build theo một quy trình nhất định nào đó. Việc build automation cũng đảm bảo code sẽ luôn được build theo một quy trình chuẩn, mà ko xảy ra lỗi do nhầm lẫn hay một nguyên nhân nào đó. Ngoài ra, build automation còn giúp thực hiện việc build code trên bất kỳ PC nào, bất cứ ai trong team cũng có thể làm được. Nó giống như việc bạn cho 1 file lên server shared và bất cứ ai có quyền cũng có thể truy cập, sử dụng file đó.&lt;/p&gt;
+
+&lt;h4 id=&quot;132-continuous-intergration-ci---tích-hợp-liên-tục&quot;&gt;1.3.2. Continuous Intergration (CI - Tích hợp liên tục)&lt;/h4&gt;
+&lt;p&gt;CI là phương pháp đòi hỏi các developer phải thường xuyên merge code thay đổi. Với cách làm việc truyền thống, các developer sẽ làm việc riêng biệt với nhau và sau một khoảng thời gian nhất định chẳng hạn như 1 tuần họ sẽ tiến hành merge code. Tuy nhiên, với CI thì developer phải merge code của họ mỗi ngày và sẽ chạy auto test để detect những vấn đề khi merge code. CI cũng được tự động hóa, và thông thường được hỗ trợ bở một CI Server. Khi developer commit source code thay đổi của họ lên, CI Server sẽ thấy sự thay đổi này và bắt đầu thực hiện build, test source code thay đổi một cách tự động. Quá trình này sẽ được thực hiện nhiều lần trong 1 ngày, và nếu CI server phát hiện có vấn đề xảy ra nó sẽ ngay lập tức hiển thị thông báo cho developer.&lt;/p&gt;
+
+&lt;p&gt;Trường hợp có một người khác đưa code của họ lên và xảy ra lỗi trong quá trình build hệ thống sẽ thông báo lỗi cho người đó tiến hành fix, đồng thời sẽ rollback lại để không làm ảnh hưởng đến những người khác.&lt;/p&gt;
+
+&lt;p&gt;ậy lợi ích của CI là gì? Đầu tiên, CI sẽ giúp phát hiện ra bug sớm, thông báo cho developer. Developer có thể fix ngay lập tức hoặc rollback để không làm ảnh hưởng đến người khác. Tiếp theo, áp dụng CI sẽ giúp tránh việc phải merge một lượng code lớn khi release. Thay vào đó code sẽ được merge tự động mỗi ngày. Đồng thời, nhờ vào việcì code được merge mỗi ngày nên chúng ta có thể release thường xuyên chứ không cần chờ đến cuối giai đoạn khi tất cả mọi thứ đã xong xuôi mới có thể release được. Khi code được build liên tục nó cũng tạo ra Continuos Testing (Test liên tục), QA có thể test ngay lập tức những chỉnh sửa đã được đưa lên mà không cần chờ đến khi mọi thứ hoàn thành. CI tạo ra một thói quen tốt cho develop, việc thường xuyên commit sẽ làm developer viết ra những đoạn code đơn giản, đúng chuẩn ko rườm ra.&lt;/p&gt;
+
+&lt;h3 id=&quot;133-continuous-delivery-và-continuous-deployment&quot;&gt;1.3.3. Continuous Delivery và Continuous Deployment&lt;/h3&gt;
+&lt;p&gt;Continuous Delivery (CD) là method đảm bảo code có thể được deploy bất cứ lúc nào. Thay vì phải quyết định có nên deploy code hay không thì team phải build, merge, test,… để đảm bảo code luôn ở trạng thái có thể deploy.&lt;/p&gt;
+
+&lt;p&gt;Một số người khi nhắc đến Continuous Delivery thường viết tắt là CD, tuy nhiên cách gọi tắt này sẽ khiến nhầm lẫn giữa Continuous Delivery và Continuous Deployment.&lt;/p&gt;
+
+&lt;p&gt;Continuous Deployment là một practice đảm bảo code thay đổi (có size nhỏ) được deploy liên tục lên product.&lt;/p&gt;
+
+&lt;p&gt;Vậy Continuous Delivery và Continuous Deployment khác nhau như thế nào ? Continous Delivery đảm bảo cho code có thể deploy bất cứ lúc nào. Trong khi Continuous Deployment là deploy thực tế lên product nhiều lần trong ngày.&lt;/p&gt;
+
+&lt;p&gt;Trên thực tế Continuous Delivery và Continuous Deployment được thực hiện theo flow sau:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Mỗi version code đưa lên đều trải qua một quy trình giống nhau, bao gồm: build automation, test automation,… Và nếu không có vấn đề gì xảy ra nghĩa là code đó có thể deploy.&lt;/li&gt;
+  &lt;li&gt;Sau khi quyết định deploy thì sẽ thực hiện deploy tự động (deploy automation).&lt;/li&gt;
+  &lt;li&gt;Nếu việc deploy gặp lỗi, hệ thống sẽ tự động rollback.&lt;/li&gt;
+  &lt;li&gt;Developer sẽ nhanh chóng fix lỗi và redeploy version fix lỗi.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Với cách làm như vậy Continuous Delivery và Continuous Deployment sẽ đem lại những lợi ích như dưới đây:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Nhanh chóng đưa sản phẩm đến tay khách hàng&lt;/li&gt;
+  &lt;li&gt;Giảm thiếu các vấn đề xảy ra khi deploy&lt;/li&gt;
+  &lt;li&gt;Giảm thiếu risk: lượng deploy trong 1 lần càng nhiều, risk càng cao. Việc chia nhỏ lượng deploy sẽ giảm thiểu risk.&lt;/li&gt;
+  &lt;li&gt;Rollback lập tức khi xảy ra lỗi&lt;/li&gt;
+  &lt;li&gt;Giúp developer không còn lo lắng khi deploy khi đã có chức năng roll back automation.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;134-infrastructure-as-code-iac&quot;&gt;1.3.4. Infrastructure as Code (IaC)&lt;/h4&gt;
+&lt;p&gt;Infrastructure as Code là method giúp quản lý, xây dựng cơ sở hạ tầng (Infra) cho sản phẩm của bạn. Với Infrastructure as Code, thay vì thực hiện thủ công theo manual. Bạn có thể viết code và cho chạy tự động. Các đối tượng xây dựng trong Infrastructure bao gồm: server, istance, môi trường, container, …&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Vì sao nên sử dụng IaC?&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Đầu tiên, IaC đảm bảo việc tạo và quản lý resource đúng tiêu chuẩn. Tất cả mọi việc được thực hiện automation, ko có những sai sót nếu thực hiện bằng tay.&lt;/li&gt;
+  &lt;li&gt;Tính linh hoạt: IaC cho phép thực hiện cùng một thay đổi giống nhau trên nhiều host, và có thể sử dụng lại trong tương lai.&lt;/li&gt;
+  &lt;li&gt;Tính co dãn (Scalability) : khi cần thêm instance bạn chỉ cần cho chạy lại config giống với instance có sẵn và một instance mới được tạo ra chỉ trong vài phút hoặc vài giây.&lt;/li&gt;
+  &lt;li&gt;Self-documenting: với IaC để xem những config của hệ thống chỉ cần xem trong source control, bạn không cần phải log lại hoặc tạo 1 tài liệu bất kỳ nào để lưu giữ thông tin config. Chính bản thân code được dùng để build infra chính là document.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;2-giới-thiệu-về-circle-ci&quot;&gt;2. Giới thiệu về Circle CI&lt;/h2&gt;
+&lt;h3 id=&quot;21-đôi-nét-về-circleci&quot;&gt;2.1. Đôi nét về CircleCI&lt;/h3&gt;
+&lt;p&gt;CircleCI là 1 công cụ CI được tin dùng bởi hơn 100,000 công ty và developers trên toàn thế giới, trong đó có Facebook, Segment, Kickstarter, Percolate, Spotify, … Với những ưu điểm như sau:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Faster Performance&lt;/strong&gt;: Có thể tùy chọn resource để tối ưu performance cho quá trình building, testing và deploying code&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Granular Control&lt;/strong&gt;: Có thể build theo các cách tùy thích bằng cách sử dụng custom job với Workflows&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Complete Flexibility&lt;/strong&gt;: Tất cả ngôn ngữ chạy trên Linux thì đều chạy được với CricleCI. Hỗ trợ First-class Docker giúp ta có thể tùy chỉnh môi trường tùy thích.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;CricleCI tương thích với nhiều sản phẩm và dịch vụ được sử dụng nhiều trong quá trình phát triển phần mềm&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Source Code&lt;/strong&gt;: GitHub, Atlassian Bitbucket, GitHub Enterprise&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Tương thích&lt;/strong&gt;: Tương thích với rất nhiều test tool&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Deployment&lt;/strong&gt;: Heroku, Docker, AWS, Azure, Google Cloud, …&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Collaborations&lt;/strong&gt;: Jira, HipChat, Slack, …&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ngoài bản Enterprise, CricleCI có Free bao gồm:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Build on Linux&lt;/li&gt;
+  &lt;li&gt;Không giới hạn repos và user&lt;/li&gt;
+  &lt;li&gt;1,500 build minutes per month&lt;/li&gt;
+  &lt;li&gt;1 container&lt;/li&gt;
+  &lt;li&gt;1 concurrent build&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Bản free khá thoải mái cho những dự án nhỏ.
+Circle CI là 1 tool để giúp ta hiện thực hóa CI. Có nhiều tool CI khác cũng nổi tiếng nữa (Travis CI, Jenkins…).&lt;/p&gt;
+
+&lt;p&gt;Circle CI sử dụng docker, trong cấu hình Circle CI ta sẽ chỉ định các docker image sẽ sử dụng và các job, trong các job lại có các step, trong các step là cụ thể các command. Ngoài ra còn có cấu hình filter giúp ta linh hoạt điều chỉnh sao cho chỉ run các job khi có merge/push vào 1 số branch nhất định vân vân.&lt;/p&gt;
+
+&lt;p&gt;Mô tả quá trình run job trên Circle CI:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Developer chỉ cần push hoặc merge vào 1 branch, Circle CI tự động biết event đó và khởi động lên job đã được cài đặt tương ứng.&lt;/li&gt;
+  &lt;li&gt;Ban đầu Circle CI pull docker image về và run lên trên môi trường cloud của nó.&lt;/li&gt;
+  &lt;li&gt;Tiếp theo nó chạy các step đã được cài đặt trong docker container, thông thường step đầu tiên luôn là checkout tức là git checkout lấy source về (mặc định lưu trong thư mục ~/project)&lt;/li&gt;
+  &lt;li&gt;Các step tiếp theo được chạy tùy vào độ sáng tạo của bạn, ví dụ job để build thì thường là npm install rồi npm run hay job để deploy thì có thể là aws s3 sync hay serverless deploy…&lt;/li&gt;
+  &lt;li&gt;Sau khi tất cả các step đã chạy xong, job kết thúc. Nếu exit code của job là error thì mặc định ta sẽ nhận được mail thông báo failed nữa.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Sau khi cài đặt và cấu hình ta chỉ việc dev còn các công việc như build, chạy test, deploy vân vân được tự động hóa hoàn toàn và chạy tức thì trên môi trường cloud mạnh mẽ miễn phí của Circle CI.&lt;/p&gt;
+&lt;h2 id=&quot;3-áp-dụng&quot;&gt;3. Áp dụng&lt;/h2&gt;
+&lt;p&gt;Sau đây mình sẽ sử dụng Circle CI để cài đặt CI giúp mình tự động deploy và publish trang blog mỗi khi có push thay đổi gì đó lên github.&lt;/p&gt;
+
+&lt;p class=&quot;info&quot;&gt;Blog của mình viết bằng ruby sử dụng template Jekyll thông qua github page.&lt;/p&gt;
+
+&lt;p&gt;Quá trình thực hiện:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Thiết lập Circle CI: Tạo một folder .circleci và tạo 1 file config.yml trong thư mục vừa tạo.&lt;/li&gt;
+  &lt;li&gt;Tiến hành push lên github: Push file cấu hình circleci lên reposiroty trên github.&lt;/li&gt;
+  &lt;li&gt;Theo dõi quá trình build và deploy.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;31-cấu-hình-circle-ci&quot;&gt;3.1. Cấu hình Circle CI&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;Bước 1: Đăng ký/đăng nhập Circle liên kết reposiroty Github&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Tiến hành truy cập trang chủ circle ci tại &lt;a href=&quot;https://circleci.com/&quot;&gt;đây&lt;/a&gt; để đăng nhập. Bạn có thể đăng nhập bằng tài khoản github hoặc bitbucket.&lt;/p&gt;
+
+&lt;p&gt;Chọn &lt;strong&gt;Add projects&lt;/strong&gt; và chọn reposiroty.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Bước 2: Thiết lập Environment Variables&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Chọn project và chọn setting. Trong mục setting chọn mục build setting chọn tiếp vào Environment Variables.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/environment-variables.PNG&quot; alt=&quot;Setup Environment Variables&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Tiến hành tạo 2 giá trị trong Environment Variables. USERNAME là username github hoặc email cũng được, PASSWORD là password tài khoản github.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/environment-variables-github.PNG&quot; alt=&quot;Setup Environment Variables Github&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Bước 3: Cấu hình .circleci/config.yml&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Trước hết tạo file config.yml Circle CI. Nội dung của file config.yml.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;version: 2
+jobs:
+  deploy:
+    docker:
+      - image: circleci/ruby:2.4.3-node-browsers
+    steps:
+      - checkout
+      - run: npm install
+      - run: bundle install
+      - run: bundle exec jekyll build
+      - deploy:
+          name: Deploy Release to GitHub
+          command: |
+            if [ $CIRCLE_BRANCH == 'develop' ]; then
+              bash .circleci/setup-github.sh
+            fi
+workflows:
+  version: 2
+  build:
+    jobs:
+      - deploy
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Trong file này sẽ sử dụng images &lt;strong&gt;circleci/ruby:2.4.3-node-browsers&lt;/strong&gt; sau đó:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bundle install&lt;/code&gt; sẽ thực hiện cài đặt cái gói bundle cần thiết.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bundle exec jekyll build&lt;/code&gt; tiến hành build Jekyll&lt;/li&gt;
+  &lt;li&gt;Deploy Release lên GitHub tiến hành deploy lên Github. Để deploy lên github sẽ chạy file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;setup-github.sh&lt;/code&gt; trong thư mục &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.circleci&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;Bước 3: Cấu hình setup-github.sh&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git config user.name &quot;$USERNAME&quot;
+git config user.email &quot;$PASSWORD&quot;
+
+git checkout master
+git pull origin master
+
+find . -maxdepth 1 ! -name '_site' ! -name '.git' ! -name '.gitignore' -exec rm -rf {} \;
+mv _site/* .
+rm -R _site/
+
+git add -fA
+git commit --allow-empty -m &quot;$(git log develop -1 --pretty=%B)&quot;
+git push origin master
+
+echo &quot;deployed successfully&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Bước 4: push code lên github&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Để push lên github chúng ta sẽ sử dụng lệnh push lên branch master. Khi có 1 commit mới, Circle CI sẽ tự động build và deploy lên github page (đoạn deploy bản chất là push source lên github page). Để ý trong Job tại đây sẽ hiển thị kết quả build.&lt;/p&gt;
+
+&lt;h3 id=&quot;32-hook-notification-về-slack&quot;&gt;3.2. Hook notification về Slack&lt;/h3&gt;
+&lt;p&gt;Với mỗi lần push code lên GitHub, CricleCI sẽ tự động build và chạy test. Sau khi xong, mặc định sẽ tự động gửi kết quả tới mail của mình.&lt;/p&gt;
+
+&lt;p&gt;Tuy nhiên để có thể giao tiếp dễ dàng với các member khác trong team, ta có thể setting để kết quả của CricleCI sẽ tự động gửi đến kênh chat của Slack.&lt;/p&gt;
+
+&lt;p&gt;Ở App Directory của Slack ta có thể tìm kiếm và cài đặt CircleCI. Sau đó chọn kênh chat mà CricleCI sẽ gửi kết quả. Add CricleCI Intergration và ta sẽ có 1 webhook URL.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/assets/images/config-slack-circle-ci.PNG&quot; alt=&quot;Setup Slack Circle CI&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Tiếp đến, trên CricleCI ta vào Project và chọn setting cho project cần notification tới Slack. Chọn Chat notifications và ta có thể thấy CricleCI tương thích với khá nhiều tool như Slack, Hipchat, Flowdock, Campfire, IRC, …&lt;/p&gt;
+
+&lt;p&gt;Và kết quả thông bác về channel Slack !&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/assets/images/message-slack.PNG&quot; alt=&quot;Message Slack Circle CI&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Như vậy, cứ mỗi lần ta push code, CricleCI sẽ tự build và test rồi thông báo kết quả lên Slack. Nó giúp cho việc phát triển của team thuận tiện hơn rất nhiều.&lt;/p&gt;</content><author><name>Hà Anh TTuấn</name></author><category term="devops" /><category term="circle ci" /><category term="continuous integration" /><category term="continuous delivery" /><summary type="html">Trong quá trình phát triển phần mềm, CI/CD có vai trò rất quan trọng trong việc đảm bảo phát triển phần mềm liên tục, mà vẫn giữ được chất lượng sản phẩm tốt. Trong bài viết này tôi sẽ trình bày những hiểu biết về DevOps và áp dụng Circle CI để: Test tự động (Java) Push kết quả lên kênh chat trên Slack 1. Tìm hiểu về DevOps 1.1. Giới thiệu về DevOps DevOps là gì? DevOps là viết tắt của Development (Dev) và Operations (Ops). DevOps là một văn hóa làm việc kết hợp giữa kỹ sư phát triển phần mềm (dev) với bộ phận operator (kỹ sư hệ thống, nhân viên bảo mật, kỹ sư mạng, kỹ sư hạ tầng,…) nhằm mục đích rút ngắn vòng đời phát triển sản phẩm (SDLC). DevOps không phải là một Tools hỗ trợ làm việc, mà là một phương pháp làm việc cần đến sự hỗ trợ của các Tools. Ngoài ra, không có bất cứ một tiêu chuẩn nào để những những người sử dụng phương pháp DevOps để tuân theo. Nó chỉ đơn giản là một văn hóa, một cách làm việc kết hợp giữa dev và nhân viên operations thay vì làm việc một mình hay chỉ một team độc lập nào đó. Dưới đây sẽ giới thiệu về những điều cần biết để áp dụng DevOps, bao gồm: DevOps Culture: văn hóa làm việc kết hợp giữa Dev và Ops DevOps Practices: cách để thực hiện DevOps DevOps Tools: những Tools cần để thực hiện DevOps DevOps và Cloud: mối quan hệ giữa DevOps và cloud 1.2. DevOps Culture Với cách làm việc truyền thống trước đây - dev làm việc riêng và operations làm việc riêng, họ sẽ có mục tiêu công việc khác nhau. Nếu như mục tiêu của dev là xây dựng function đúng với requirement và release cho khách hàng càng nhanh càng tốt thì mục tiêu của operations là tạo ra một hệ thống ổn định. Trong một hoàn cảnh nào đó, hai mục tiêu này sẽ đối lập nhau, function có thể chạy tốt lúc release nhưng sau một thời gian có thể xuất hiện nhiều lỗi hoặc chạy chậm. Hoặc một sản phẩm suy nghĩ nhiều về maintaince system sẽ làm chậm thời gian release. Vì thế, DevOps được sinh ra với ý tưởng là kết hợp Dev và Ops mới một mục tiêu chung là “Speed and Stability” - Tốc độ và ổn định. Vậy khi có 1 team DevOps, những mục tiêu đạt đến cụ thể như sau: Fast time - to market (TTM): code nhanh, deploy nhanh. Few production failures: khi sản phẩm được đảm bảo về tính ổn định ngay từ đầu thì lỗi sẽ ít xảy ra hơn. Immediate recovery from failures: không may nếu xảy ra lỗi, vì chúng ta có 1 team đầy đủ dev và ops nên có thể nhanh chóng nhận định nguyên nhân lỗi là do program hay do cấu trúc hệ thống,… và có thể nhanh chóng giải quyết vấn đề ngay lập tức. Trong DevOps culture, cả dev và operations đều phải quan tâm đến tính ổn định và tốc độ của sản phẩm.Vì thế, dev và operations sẽ phải làm việc cùng nhau, sử dụng những tools kiểm tra tốc độ và tính ổn định của sản phẩm, nhờ vậy mà có thể tạo ra những sản phẩm tốt hơn. 1.3. DevOps Concepts và Practices 1.3.1. Build Automation Build Automation là một quy trình tự động để chuẩn bị source code deploy lên môi trường bằng cách sử dụng script hoặc tool. Tùy vào ngôn ngữ được sử dụng mà cần phải compile, transform hoặc thực hiện unit test,… đối với code. Thông thường build automation cũng giống như việc chạy một command - line tool để chạy doạn code đã được viết script hoặc được setting trong file config. Việc build automation không nên bị phụ thuộc vào IDE cũng như những config của máy tính. Nó có nghĩa là code của bạn có thể được build trên bất cứ PC nào, dù là của bạn hay của người khác. Vậy tại sao phải build automation? Trước tiên, build automation sẽ giúp tiết kiệm thời gian, có thể handle được những task cần phải build theo một quy trình nhất định nào đó. Việc build automation cũng đảm bảo code sẽ luôn được build theo một quy trình chuẩn, mà ko xảy ra lỗi do nhầm lẫn hay một nguyên nhân nào đó. Ngoài ra, build automation còn giúp thực hiện việc build code trên bất kỳ PC nào, bất cứ ai trong team cũng có thể làm được. Nó giống như việc bạn cho 1 file lên server shared và bất cứ ai có quyền cũng có thể truy cập, sử dụng file đó. 1.3.2. Continuous Intergration (CI - Tích hợp liên tục) CI là phương pháp đòi hỏi các developer phải thường xuyên merge code thay đổi. Với cách làm việc truyền thống, các developer sẽ làm việc riêng biệt với nhau và sau một khoảng thời gian nhất định chẳng hạn như 1 tuần họ sẽ tiến hành merge code. Tuy nhiên, với CI thì developer phải merge code của họ mỗi ngày và sẽ chạy auto test để detect những vấn đề khi merge code. CI cũng được tự động hóa, và thông thường được hỗ trợ bở một CI Server. Khi developer commit source code thay đổi của họ lên, CI Server sẽ thấy sự thay đổi này và bắt đầu thực hiện build, test source code thay đổi một cách tự động. Quá trình này sẽ được thực hiện nhiều lần trong 1 ngày, và nếu CI server phát hiện có vấn đề xảy ra nó sẽ ngay lập tức hiển thị thông báo cho developer. Trường hợp có một người khác đưa code của họ lên và xảy ra lỗi trong quá trình build hệ thống sẽ thông báo lỗi cho người đó tiến hành fix, đồng thời sẽ rollback lại để không làm ảnh hưởng đến những người khác. ậy lợi ích của CI là gì? Đầu tiên, CI sẽ giúp phát hiện ra bug sớm, thông báo cho developer. Developer có thể fix ngay lập tức hoặc rollback để không làm ảnh hưởng đến người khác. Tiếp theo, áp dụng CI sẽ giúp tránh việc phải merge một lượng code lớn khi release. Thay vào đó code sẽ được merge tự động mỗi ngày. Đồng thời, nhờ vào việcì code được merge mỗi ngày nên chúng ta có thể release thường xuyên chứ không cần chờ đến cuối giai đoạn khi tất cả mọi thứ đã xong xuôi mới có thể release được. Khi code được build liên tục nó cũng tạo ra Continuos Testing (Test liên tục), QA có thể test ngay lập tức những chỉnh sửa đã được đưa lên mà không cần chờ đến khi mọi thứ hoàn thành. CI tạo ra một thói quen tốt cho develop, việc thường xuyên commit sẽ làm developer viết ra những đoạn code đơn giản, đúng chuẩn ko rườm ra. 1.3.3. Continuous Delivery và Continuous Deployment Continuous Delivery (CD) là method đảm bảo code có thể được deploy bất cứ lúc nào. Thay vì phải quyết định có nên deploy code hay không thì team phải build, merge, test,… để đảm bảo code luôn ở trạng thái có thể deploy. Một số người khi nhắc đến Continuous Delivery thường viết tắt là CD, tuy nhiên cách gọi tắt này sẽ khiến nhầm lẫn giữa Continuous Delivery và Continuous Deployment. Continuous Deployment là một practice đảm bảo code thay đổi (có size nhỏ) được deploy liên tục lên product. Vậy Continuous Delivery và Continuous Deployment khác nhau như thế nào ? Continous Delivery đảm bảo cho code có thể deploy bất cứ lúc nào. Trong khi Continuous Deployment là deploy thực tế lên product nhiều lần trong ngày. Trên thực tế Continuous Delivery và Continuous Deployment được thực hiện theo flow sau: Mỗi version code đưa lên đều trải qua một quy trình giống nhau, bao gồm: build automation, test automation,… Và nếu không có vấn đề gì xảy ra nghĩa là code đó có thể deploy. Sau khi quyết định deploy thì sẽ thực hiện deploy tự động (deploy automation). Nếu việc deploy gặp lỗi, hệ thống sẽ tự động rollback. Developer sẽ nhanh chóng fix lỗi và redeploy version fix lỗi. Với cách làm như vậy Continuous Delivery và Continuous Deployment sẽ đem lại những lợi ích như dưới đây: Nhanh chóng đưa sản phẩm đến tay khách hàng Giảm thiếu các vấn đề xảy ra khi deploy Giảm thiếu risk: lượng deploy trong 1 lần càng nhiều, risk càng cao. Việc chia nhỏ lượng deploy sẽ giảm thiểu risk. Rollback lập tức khi xảy ra lỗi Giúp developer không còn lo lắng khi deploy khi đã có chức năng roll back automation. 1.3.4. Infrastructure as Code (IaC) Infrastructure as Code là method giúp quản lý, xây dựng cơ sở hạ tầng (Infra) cho sản phẩm của bạn. Với Infrastructure as Code, thay vì thực hiện thủ công theo manual. Bạn có thể viết code và cho chạy tự động. Các đối tượng xây dựng trong Infrastructure bao gồm: server, istance, môi trường, container, … Vì sao nên sử dụng IaC? Đầu tiên, IaC đảm bảo việc tạo và quản lý resource đúng tiêu chuẩn. Tất cả mọi việc được thực hiện automation, ko có những sai sót nếu thực hiện bằng tay. Tính linh hoạt: IaC cho phép thực hiện cùng một thay đổi giống nhau trên nhiều host, và có thể sử dụng lại trong tương lai. Tính co dãn (Scalability) : khi cần thêm instance bạn chỉ cần cho chạy lại config giống với instance có sẵn và một instance mới được tạo ra chỉ trong vài phút hoặc vài giây. Self-documenting: với IaC để xem những config của hệ thống chỉ cần xem trong source control, bạn không cần phải log lại hoặc tạo 1 tài liệu bất kỳ nào để lưu giữ thông tin config. Chính bản thân code được dùng để build infra chính là document. 2. Giới thiệu về Circle CI 2.1. Đôi nét về CircleCI CircleCI là 1 công cụ CI được tin dùng bởi hơn 100,000 công ty và developers trên toàn thế giới, trong đó có Facebook, Segment, Kickstarter, Percolate, Spotify, … Với những ưu điểm như sau: Faster Performance: Có thể tùy chọn resource để tối ưu performance cho quá trình building, testing và deploying code Granular Control: Có thể build theo các cách tùy thích bằng cách sử dụng custom job với Workflows Complete Flexibility: Tất cả ngôn ngữ chạy trên Linux thì đều chạy được với CricleCI. Hỗ trợ First-class Docker giúp ta có thể tùy chỉnh môi trường tùy thích. CricleCI tương thích với nhiều sản phẩm và dịch vụ được sử dụng nhiều trong quá trình phát triển phần mềm Source Code: GitHub, Atlassian Bitbucket, GitHub Enterprise Tương thích: Tương thích với rất nhiều test tool Deployment: Heroku, Docker, AWS, Azure, Google Cloud, … Collaborations: Jira, HipChat, Slack, … Ngoài bản Enterprise, CricleCI có Free bao gồm: Build on Linux Không giới hạn repos và user 1,500 build minutes per month 1 container 1 concurrent build Bản free khá thoải mái cho những dự án nhỏ. Circle CI là 1 tool để giúp ta hiện thực hóa CI. Có nhiều tool CI khác cũng nổi tiếng nữa (Travis CI, Jenkins…). Circle CI sử dụng docker, trong cấu hình Circle CI ta sẽ chỉ định các docker image sẽ sử dụng và các job, trong các job lại có các step, trong các step là cụ thể các command. Ngoài ra còn có cấu hình filter giúp ta linh hoạt điều chỉnh sao cho chỉ run các job khi có merge/push vào 1 số branch nhất định vân vân. Mô tả quá trình run job trên Circle CI: Developer chỉ cần push hoặc merge vào 1 branch, Circle CI tự động biết event đó và khởi động lên job đã được cài đặt tương ứng. Ban đầu Circle CI pull docker image về và run lên trên môi trường cloud của nó. Tiếp theo nó chạy các step đã được cài đặt trong docker container, thông thường step đầu tiên luôn là checkout tức là git checkout lấy source về (mặc định lưu trong thư mục ~/project) Các step tiếp theo được chạy tùy vào độ sáng tạo của bạn, ví dụ job để build thì thường là npm install rồi npm run hay job để deploy thì có thể là aws s3 sync hay serverless deploy… Sau khi tất cả các step đã chạy xong, job kết thúc. Nếu exit code của job là error thì mặc định ta sẽ nhận được mail thông báo failed nữa. Sau khi cài đặt và cấu hình ta chỉ việc dev còn các công việc như build, chạy test, deploy vân vân được tự động hóa hoàn toàn và chạy tức thì trên môi trường cloud mạnh mẽ miễn phí của Circle CI. 3. Áp dụng Sau đây mình sẽ sử dụng Circle CI để cài đặt CI giúp mình tự động deploy và publish trang blog mỗi khi có push thay đổi gì đó lên github. Blog của mình viết bằng ruby sử dụng template Jekyll thông qua github page. Quá trình thực hiện: Thiết lập Circle CI: Tạo một folder .circleci và tạo 1 file config.yml trong thư mục vừa tạo. Tiến hành push lên github: Push file cấu hình circleci lên reposiroty trên github. Theo dõi quá trình build và deploy. 3.1. Cấu hình Circle CI Bước 1: Đăng ký/đăng nhập Circle liên kết reposiroty Github Tiến hành truy cập trang chủ circle ci tại đây để đăng nhập. Bạn có thể đăng nhập bằng tài khoản github hoặc bitbucket. Chọn Add projects và chọn reposiroty. Bước 2: Thiết lập Environment Variables Chọn project và chọn setting. Trong mục setting chọn mục build setting chọn tiếp vào Environment Variables. Tiến hành tạo 2 giá trị trong Environment Variables. USERNAME là username github hoặc email cũng được, PASSWORD là password tài khoản github. Bước 3: Cấu hình .circleci/config.yml Trước hết tạo file config.yml Circle CI. Nội dung của file config.yml. version: 2 jobs: deploy: docker: - image: circleci/ruby:2.4.3-node-browsers steps: - checkout - run: npm install - run: bundle install - run: bundle exec jekyll build - deploy: name: Deploy Release to GitHub command: | if [ $CIRCLE_BRANCH == 'develop' ]; then bash .circleci/setup-github.sh fi workflows: version: 2 build: jobs: - deploy Trong file này sẽ sử dụng images circleci/ruby:2.4.3-node-browsers sau đó: bundle install sẽ thực hiện cài đặt cái gói bundle cần thiết. bundle exec jekyll build tiến hành build Jekyll Deploy Release lên GitHub tiến hành deploy lên Github. Để deploy lên github sẽ chạy file setup-github.sh trong thư mục .circleci. Bước 3: Cấu hình setup-github.sh git config user.name &quot;$USERNAME&quot; git config user.email &quot;$PASSWORD&quot; git checkout master git pull origin master find . -maxdepth 1 ! -name '_site' ! -name '.git' ! -name '.gitignore' -exec rm -rf {} \; mv _site/* . rm -R _site/ git add -fA git commit --allow-empty -m &quot;$(git log develop -1 --pretty=%B)&quot; git push origin master echo &quot;deployed successfully&quot; Bước 4: push code lên github Để push lên github chúng ta sẽ sử dụng lệnh push lên branch master. Khi có 1 commit mới, Circle CI sẽ tự động build và deploy lên github page (đoạn deploy bản chất là push source lên github page). Để ý trong Job tại đây sẽ hiển thị kết quả build. 3.2. Hook notification về Slack Với mỗi lần push code lên GitHub, CricleCI sẽ tự động build và chạy test. Sau khi xong, mặc định sẽ tự động gửi kết quả tới mail của mình. Tuy nhiên để có thể giao tiếp dễ dàng với các member khác trong team, ta có thể setting để kết quả của CricleCI sẽ tự động gửi đến kênh chat của Slack. Ở App Directory của Slack ta có thể tìm kiếm và cài đặt CircleCI. Sau đó chọn kênh chat mà CricleCI sẽ gửi kết quả. Add CricleCI Intergration và ta sẽ có 1 webhook URL. Tiếp đến, trên CricleCI ta vào Project và chọn setting cho project cần notification tới Slack. Chọn Chat notifications và ta có thể thấy CricleCI tương thích với khá nhiều tool như Slack, Hipchat, Flowdock, Campfire, IRC, … Và kết quả thông bác về channel Slack ! Như vậy, cứ mỗi lần ta push code, CricleCI sẽ tự build và test rồi thông báo kết quả lên Slack. Nó giúp cho việc phát triển của team thuận tiện hơn rất nhiều.</summary></entry><entry><title type="html">Cloud Computing - Triển khai 1 dịch vụ cơ sở hạ tầng (Vultr) &amp;amp; triển khai ứng dụng Web</title><link href="/2019/08/30/cloud-computing-trien-khai-1-dich-vu-co-so-ha-tang-vultr-trien-khai-ung-dung-website.html" rel="alternate" type="text/html" title="Cloud Computing - Triển khai 1 dịch vụ cơ sở hạ tầng (Vultr) &amp; triển khai ứng dụng Web" /><published>2019-08-30T00:00:00+00:00</published><updated>2019-08-30T00:00:00+00:00</updated><id>/2019/08/30/cloud-computing-trien-khai-1-dich-vu-co-so-ha-tang-vultr-trien-khai-ung-dung-website</id><content type="html" xml:base="/2019/08/30/cloud-computing-trien-khai-1-dich-vu-co-so-ha-tang-vultr-trien-khai-ung-dung-website.html">&lt;p&gt;Trong bài này tôi sẽ trình bày về sự hiểu biết của mình về (Cloud Computing) .&lt;/p&gt;
+
+&lt;p&gt;Cụ thể hơn trong bài viết này tôi sẽ tìm hiểu về dịch vụ cho thuê cơ sở hạ tầng của Vultr (Infrastructure Cloud) &amp;amp; Cài đặt cái gói (LEMP Stack) để triển khai 1 ứng dụng website chạy trên VPS (Virtual Private Server).&lt;/p&gt;
+&lt;h2 id=&quot;1-các-yêu-cầu-cần-thiết&quot;&gt;1. Các yêu cầu cần thiết&lt;/h2&gt;
+&lt;ol&gt;
+  &lt;li&gt;Một tài khoản Vultr đã kích hoạt thanh toán.&lt;/li&gt;
+  &lt;li&gt;Công cụ:
+    &lt;ul&gt;
+      &lt;li&gt;Webserver: Nginx&lt;/li&gt;
+      &lt;li&gt;Terminal/Putty&lt;/li&gt;
+      &lt;li&gt;FTP, FileZilla Client&lt;/li&gt;
+      &lt;li&gt;Git&lt;/li&gt;
+      &lt;li&gt;IDE: Intelli IDEA hoặc Visual Studio Code&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Ngôn ngữ lập trình: PHP, Node.JS&lt;/li&gt;
+  &lt;li&gt;Database: Mariadb (MySQL), MongoDb&lt;/li&gt;
+  &lt;li&gt;Hệ điều hành: Centos 7
+    &lt;h2 id=&quot;2-giới-thiệu-về-vultr&quot;&gt;2. Giới thiệu về Vultr&lt;/h2&gt;
+    &lt;p&gt;Vultr là nhà cung cấp dịch vụ VPS Server, Cloud Server với 100% phần cứng SSD, 16 datacenter location. Ưu điểm của Vultr là giá rẻ, hiệu năng cao và cài đặt dễ dàng, nhanh chóng.&lt;/p&gt;
+    &lt;h3 id=&quot;21-tổng-quan-về-vultr&quot;&gt;2.1. Tổng quan về Vultr&lt;/h3&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/vultr-logo.png&quot; alt=&quot;Vultr&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Vultr, được thành lập vào năm 2014, đang thực hiện sứ mệnh trao quyền cho các nhà phát triển và doanh nghiệp bằng cách đơn giản hóa việc triển khai cơ sở hạ tầng thông qua nền tảng đám mây tiên tiến.&lt;/p&gt;
+
+&lt;p&gt;Vultr có vị trí chiến lược trong 16 trung tâm dữ liệu trên toàn cầu và cung cấp việc cung cấp dịch vụ đám mây: public cloud, storage, …&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Sự khác biệt&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Geographic Footprint&lt;/strong&gt;: Vultr có 16 Datacenter tại 16 thành phố giải rác trên thế giới. Điều này sẽ cung cấp các dịch vụ đám mây gần bạn nhất.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;One Click Apps&lt;/strong&gt;: Nhanh chóng khởi tạo các ứng dụng dễ dàng, đơn giản chỉ bằng một cú nhấp chuột. Hỗ trợ các ứng dụng như: WordPress, Prestashop, Magento, Joomla, Docker, Gitlab, Drupal, Cpanel (có tính phí bản quyền), LAMP, LEMP, Mediawiki, Minecraff, NextCloud, OpenLiteSpeed, OpenVPN, ownCloud, Plesk Onyx, Webmin.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Full Resource Control&lt;/strong&gt;: Được cung cấp tài khoản root/administrator để quản lý resource.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Upload ISO / Mount ISO&lt;/strong&gt;: Tạo các tùy chọn OS, hầu như không giới hạn bằng cách tải lên file ISO và cài đặt OS tùy chỉnh đó.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Linux, Windows and BSD&lt;/strong&gt;: Vultr thực sự hỗ trợ một loạt các bản phân phối Linux, Windows và BSD phổ biến.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;No Long Term Contracts&lt;/strong&gt;: Thanh toán bằng giờ sử dụng.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;22-công-nghệ-của-vultr&quot;&gt;2.2. Công nghệ của Vultr&lt;/h3&gt;
+&lt;p&gt;Vultr cung cấp 4 dịch vụ chính:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Cloud Compute&lt;/strong&gt;: cung cấp dịch vụ thuê máy chủ ảo sử dụng CPU Intel và 100% máy chủ sử dụng SSD.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Dedicated Cloud&lt;/strong&gt;: Dedicated server là một loại lưu trữ trên internet mà người sử dụng có thể thuê toàn bộ một máy chủ, không hề chia sẻ với bất cứ ai.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Bare Metal&lt;/strong&gt;: là dịch vụ dedicated server. Nhưng được triển khai trên nền tảng cloud của Vultr nên thừa hưởng những tính năng như: thanh toán theo giờ, nâng cấp mở rộng, API và hỗ trợ nhiều location khác nhau.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Block Storage&lt;/strong&gt;: Lưu trữ nhanh và có thể lưu trữ được hỗ trợ bởi SSD với dung lượng lên tới 10TB.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;3-triển-khai-dịch-vụ&quot;&gt;3. Triển khai dịch vụ&lt;/h2&gt;
+&lt;p&gt;Vultr có trang dashboard để quản lý cũng như giám sát tài nguyên sử dụng các dịch vụ đang sử dụng.&lt;/p&gt;
+&lt;h3 id=&quot;31-triển-khai-mới-dịch-vụ&quot;&gt;3.1. Triển khai mới dịch vụ&lt;/h3&gt;
+&lt;p&gt;Để triển khai 1 dịch vụ trên Vultr truy cập vào tab deloy (dấu +) hoặc tại &lt;a href=&quot;https://my.vultr.com/deploy/&quot;&gt;đây&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Tiến hành chọn dịch vụ sử dụng&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/select-service-vultr.png&quot; alt=&quot;Deploy Vultr Service&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Tiếp theo chọn &lt;strong&gt;Server Location&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images//select-server-location-vultr.png&quot; alt=&quot;Deploy Vultr Service&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Sau đó chọn Server Type. Trong phần Server Type sẽ cho phép chọn OS hoặc chọn Application.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/server-type-vultr.png&quot; alt=&quot;Deploy Vultr Service&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Tiếp theo sẽ chọn Server Size. Trong phần Server Size sẽ cho phép chọn các plan phù hợp với nhu cầu sử dụng.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images//server-size-vultr.png&quot; alt=&quot;Deploy Vultr Service&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Cuối cùng thiết lập các &lt;strong&gt;Additional Features(Enable IPv6, Enable Private Networking)&lt;/strong&gt;, &lt;strong&gt;Startup Script&lt;/strong&gt; , &lt;strong&gt;SSH Keys&lt;/strong&gt;, &lt;strong&gt;Server Hostname &amp;amp; Label&lt;/strong&gt; và nhấn Deloy Now để tạo mới 1 dịch vụ.&lt;/p&gt;
+
+&lt;h3 id=&quot;32-nâng-cấp-dịch-vụ&quot;&gt;3.2. Nâng cấp dịch vụ&lt;/h3&gt;
+&lt;p&gt;Trong trường hợp muốn nâng cấp về tài nguyên như: RAM, CPU, Storage, IP Public…&lt;/p&gt;
+
+&lt;p&gt;Tại trang quản lý của Vultr sẽ cho phép nâng cấp plan đang sử dụng để thuê thêm tài nguyên hoặc thuê thêm IP Public.&lt;/p&gt;
+
+&lt;p&gt;Chọn plan cần nâng cấp, chọn gói và nhấn &lt;strong&gt;Upgrade&lt;/strong&gt; để nâng cấp dịch vụ. Vì Vultr tính tiền theo giờ thế nên nó sẽ tính tiền plan mới khi mình upgrade thành công.&lt;/p&gt;
+
+&lt;h3 id=&quot;33-xóa-bỏ-1-dịch-vụ&quot;&gt;3.3. Xóa bỏ 1 dịch vụ&lt;/h3&gt;
+&lt;p&gt;Để hủy 1 dịch vụ trên Vultr cần phải truy cập trang quản lý, Chọn dịch vụ nhấn ký tự (…) và chọn Server destroy. Nhấn xác nhận quá trình destroy khá nhanh khoảng 3p đã hủy thành công 1 dịch vụ.&lt;/p&gt;
+
+&lt;h2 id=&quot;4-triển-khai-ứng-dụng-web&quot;&gt;4. Triển khai ứng dụng web&lt;/h2&gt;
+&lt;p&gt;Trong bài viết này tôi sẽ cài LEMP Stack trên hệ điều hành Centos. Và đẩy source lên trên server và tiến hành chạy 1 ứng dụng web.&lt;/p&gt;
+
+&lt;p&gt;Thường khi chúng ta sử dụng hosting của các nhà cung cấp dịch vụ như tenten, z.com… thường sẽ có trang dashboard để quản lý tài nguyên, source code website. Họ sử dụng control panel để tạo ra admin panel cho người dùng sử dụng. Hiện tại có khá nhiều control panel như: &lt;strong&gt;Cpanel&lt;/strong&gt;, &lt;strong&gt;CWP(Control Web Page) Control Panel&lt;/strong&gt;, &lt;strong&gt;Sentora&lt;/strong&gt;, &lt;strong&gt;VestaCP&lt;/strong&gt;, &lt;strong&gt;Webuzo&lt;/strong&gt;, &lt;strong&gt;ISPConfig&lt;/strong&gt;, &lt;strong&gt;VirtualMin&lt;/strong&gt;, &lt;strong&gt;Plesk&lt;/strong&gt;, &lt;strong&gt;DirectAdmin&lt;/strong&gt;, …&lt;/p&gt;
+
+&lt;p&gt;Bản chất các control này sẽ cài các gói LEMP (Linux, Engine x, Mysql, PHP) hoặc LAMP (Linux, Apache, Mysql, PHP) để có thể tạo ra môi trường để source code website có thể chạy được. Các nhà cung cấp hosting sẽ cấu hình và tạo ra 1 control admin panel để giúp người dùng sử dụng mà không cần biết cấu hình như thế nào. Trong trường hợp này tôi sử dụng 1 dịch vụ cơ sở hạ tầng của Vultr cung cấp là: 1 server Centos 7 - Ram 512MB, 10GB SSD, 0.5TB băng thông. Để có thể chạy 1 ứng dụng web tôi cần phải cài gói LAMP hoặc LEMP và đẩy source code của tôi lên server.&lt;/p&gt;
+
+&lt;h3 id=&quot;41-cài-đặt-lemp-nginx-mysql-php&quot;&gt;4.1. Cài đặt LEMP (Nginx, MySQL, PHP)&lt;/h3&gt;
+
+&lt;p class=&quot;info&quot;&gt;LEMP server là một server chạy Linux, Nginx (đọc là Engine x), MySql và PHP (hoặc Perl/Python). Nó tương tự như LAMP server ngoại trừ việc web server nền tảng được giám sát bằng Nginx thay vì Apache.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Cài đặt nginx&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Thêm CentOS 7 EPEL repository&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;yum &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;epel-release
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Cài đặt nginx trên Centos 7&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;yum &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;nginx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Khởi chạy nginx&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;systemctl start nginx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Nếu virtual private của bạn đang sử dụng firewall, run câu lệnh sau để cho phép HTTP và HTTPS traffic:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--permanent&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--zone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;public &lt;span class=&quot;nt&quot;&gt;--add-service&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;http 
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--permanent&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--zone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;public &lt;span class=&quot;nt&quot;&gt;--add-service&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;https
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--reload&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Để kiểm tra nginx hoạt động hay chưa hãy kiểm tra bằng cách truy cập vào public IP trên webbrowser.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;http://server_domain_name_or_IP/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Nếu nhìn thấy giao diện mặc định CentOS 7 Nginx web page thì đã cài thành công nginx.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/nginx-default.png&quot; alt=&quot;Installed Nginx&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Cài đặt PHP 7&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Bây giờ cài đặt PHP, ở đây tôi cài PHP 7. Tiến hành cài đặt PHP 7 từ remi-php72 rpm repository.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## PHP 5.3 ##&lt;/span&gt;
+yum &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 5.4 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 5.5 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php55 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 5.6 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php56 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 7.0 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php70 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 7.1 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php71 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+
+&lt;span class=&quot;c&quot;&gt;## PHP 7.2 ##&lt;/span&gt;
+yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php72 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; nginx php-fpm php-common
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Cài đặt các module php cần thiết. Dùng câu lệnh sau để hiển thị danh sách module có sẵn trong yum repositories.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi-php72 search php
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Một số module PHP thông dụng:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;OPcache (php-opcache) – The Zend OPcache provides faster PHP execution through opcode caching and optimization.&lt;/li&gt;
+  &lt;li&gt;APCu (php-pecl-apc) – APCu userland caching&lt;/li&gt;
+  &lt;li&gt;CLI (php-cli) – Command-line interface for PHP&lt;/li&gt;
+  &lt;li&gt;PEAR (php-pear) – PHP Extension and Application Repository framework&lt;/li&gt;
+  &lt;li&gt;PDO (php-pdo) – A database access abstraction module for PHP applications&lt;/li&gt;
+  &lt;li&gt;MySQL (php-mysqlnd) – A module for PHP applications that use MySQL databases&lt;/li&gt;
+  &lt;li&gt;PostgreSQL (php-pgsql) – A PostgreSQL database module for PHP&lt;/li&gt;
+  &lt;li&gt;MongoDB (php-pecl-mongo) – PHP MongoDB database driver&lt;/li&gt;
+  &lt;li&gt;SQLite (php-pecl-sqlite) – Extension for the SQLite Embeddable SQL Database Engine&lt;/li&gt;
+  &lt;li&gt;Memcache (php-pecl-memcache) – Extension to work with the Memcached caching daemon&lt;/li&gt;
+  &lt;li&gt;Memcached (php-pecl-memcached) – Extension to work with the Memcached caching daemon&lt;/li&gt;
+  &lt;li&gt;GD (php-gd) – A module for PHP applications for using the gd graphics library&lt;/li&gt;
+  &lt;li&gt;XML (php-xml) – A module for PHP applications which use XML
+MBString (php-mbstring) – A module for PHP applications which need multi-byte string handling&lt;/li&gt;
+  &lt;li&gt;MCrypt (php-mcrypt) – Standard PHP module provides mcrypt library support&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Để cài đặt bạn hãy sử dụng lệnh &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;yum --enablerepo=remi,remi-php56 install ten_module&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Cài các module php cần thiết sau:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;yum &lt;span class=&quot;nt&quot;&gt;--enablerepo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;remi,remi-php56 &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; php-opcache php-pecl-apcu php-cli php-pear php-pdo php-mysqlnd php-pgsql php-pecl-mongo php-pecl-sqlite php-pecl-memcache php-pecl-memcached php-gd php-mbstring php-mcrypt php-xml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Cài đặt MySQL 5.6 (MariaDB)&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Thêm MariaDB repo&lt;/p&gt;
+
+&lt;p class=&quot;info&quot;&gt;Lưu ý: Không cần thực hiện trên CentOS 7. Phiên bản MariaDB trên CentOS 7 hiện nay là 5.5.37&lt;/p&gt;
+
+&lt;p&gt;Cài đặt hoặc update MariaDB&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## CentOS 7 ##&lt;/span&gt;
+yum &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; mariadb mariadb-server
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Khởi động MariaDB và tự động chạy khi boot&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## CentOS 7 ##&lt;/span&gt;
+systemctl start mariadb.service
+systemctl &lt;span class=&quot;nb&quot;&gt;enable &lt;/span&gt;mariadb.service
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Cấu hình MariaDB&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Set (Change) root password&lt;/li&gt;
+  &lt;li&gt;Remove anonymous users&lt;/li&gt;
+  &lt;li&gt;Disallow root login remotely&lt;/li&gt;
+  &lt;li&gt;Remove test database and access to it&lt;/li&gt;
+  &lt;li&gt;Reload privilege tables&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Chạy lệnh sau để cài đặt&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;/usr/bin/mysql_secure_installation
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Ngay bước đầu tiên bạn sẽ bị hỏi root password, do mới cài đặt nên tất nhiên chưa có password, nhấn Enter để tiếp tục.&lt;/p&gt;
+
+&lt;p&gt;Output tương tự như sau:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;NOTE: RUNNING ALL PARTS OF THIS SCRIPT IS RECOMMENDED FOR ALL MariaDB
+SERVERS IN PRODUCTION USE! PLEASE READ EACH STEP CAREFULLY!
+
+In order to log into MariaDB to secure it, we\'ll need the current
+password for the root user. If you\'ve just installed MariaDB, and
+you haven\'t set the root password yet, the password will be blank,
+so you should just press enter here.
+
+Enter current password for root (enter for none):
+OK, successfully used password, moving on...
+
+Setting the root password ensures that nobody can log into the MariaDB
+root user without the proper authorisation.
+
+Set root password? [Y/n] y
+New password:
+Re-enter new password:
+Password updated successfully!
+Reloading privilege tables..
+... Success!
+
+
+By default, a MariaDB installation has an anonymous user, allowing anyone
+to log into MariaDB without having to have a user account created for
+them. This is intended only for testing, and to make the installation
+go a bit smoother. You should remove them before moving into a
+production environment.
+
+Remove anonymous users? [Y/n] y
+... Success!
+
+Normally, root should only be allowed to connect from \'localhost\'. This
+ensures that someone cannot guess at the root password from the network.
+
+Disallow root login remotely? [Y/n] y
+... Success!
+
+By default, MariaDB comes with a database named \'test\' that anyone can
+access. This is also intended only for testing, and should be removed
+before moving into a production environment.
+
+Remove test database and access to it? [Y/n] y
+- Dropping test database...
+... Success!
+- Removing privileges on test database...
+... Success!
+
+Reloading the privilege tables will ensure that all changes made so far
+will take effect immediately.
+
+Reload privilege tables now? [Y/n] y
+... Success!
+
+Cleaning up...
+
+All done! If you\'ve completed all of the above steps, your MariaDB
+installation should now be secure.
+
+Thanks for using MariaDB!
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;42-tạo-block-server-nginx&quot;&gt;4.2. Tạo Block Server Nginx&lt;/h3&gt;
+&lt;h4 id=&quot;421-dns-domain&quot;&gt;4.2.1. DNS Domain&lt;/h4&gt;
+&lt;p&gt;Để DNS bạn cần truy cập vào trang quản lý DNS của nhà cung cấp domain. Tại đây thêm 1 record Type A: Host record: php, Type: A, Value: địa chỉ ip VPS.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/dns-tenten.png&quot; alt=&quot;DNS Setup&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Với bản ghi trên sẽ DNS trỏ về subdomain là: php.yourdomain.com&lt;/p&gt;
+
+&lt;h4 id=&quot;422-config-nginx&quot;&gt;4.2.2. Config Nginx&lt;/h4&gt;
+&lt;p&gt;Để DNS có thể trỏ đúng về webser thì ta cần phải thêm 1 block server. Ở Apche2 virtual host được định nghĩa là virtual host còn đối với nginx lại được định nghĩa là block server. Mỗi 1 block server được định nghĩa trong thư mục &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cd /etc/nginx/conf.d&lt;/code&gt; để thêm 1 block server chỉ cần thêm 1 file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.conf&lt;/code&gt;. Để thêm block server gõ lệnh sau:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /etc/nginx/conf.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Tạo mới 1 block server .conf&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;nano php.yourdomain.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Gõ đoạn sau vào file php.yourdomain.conf&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;server &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    listen 80&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    server_name yourdomain www.yourdomain&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    location / &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        root   /home/php/public_html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        index index.php index.html index.htm&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        try_files &lt;span class=&quot;nv&quot;&gt;$uri&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$uri&lt;/span&gt;/ /index.php?q&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$uri&lt;/span&gt;&amp;amp;&lt;span class=&quot;nv&quot;&gt;$args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    error_page  404              /404.html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    location &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; /404.html &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;# /home/php/public_html la thu muc chua source code&lt;/span&gt;
+        root   /home/php/public_html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    error_page   500 502 503 504  /50x.html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    location &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; /50x.html &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;# /home/php/public_html la thu muc chua source code&lt;/span&gt;
+        root   /home/php/public_html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;c&quot;&gt;# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000&lt;/span&gt;
+    &lt;span class=&quot;c&quot;&gt;#&lt;/span&gt;
+    location ~ &lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;php&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        root           /home/php/public_html&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        fastcgi_pass   127.0.0.1:9000&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        fastcgi_index  index.php&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        fastcgi_param  SCRIPT_FILENAME   &lt;span class=&quot;nv&quot;&gt;$document_root$fastcgi_script_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        include        fastcgi_params&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;43-upload-source-code-lên-hosting&quot;&gt;4.3. Upload source code lên hosting&lt;/h3&gt;
+&lt;h4 id=&quot;431-tạo-mysql-database&quot;&gt;4.3.1. Tạo MySQL Database&lt;/h4&gt;
+&lt;p&gt;Gõ lệnh&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mysql &lt;span class=&quot;nt&quot;&gt;-u&lt;/span&gt; root &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Tạo mới 1 Database mới&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CREATE DATABASE cloudcomputing_db&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Tạo mới user. Lệnh dưới đây sẽ tạo ra 1 user mới là &lt;strong&gt;cloudcomputing&lt;/strong&gt; pass word là &lt;strong&gt;cloudcomputing_demo&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CREATE USER 'cloudcomputing'@'localhost' IDENTIFIED BY 'cloudcomputing_demo';
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Phân quyền cho user cloudcomputing&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GRANT ALL PRIVILEGES ON cloudcomputing_db. * TO 'cloudcomputing'@'localhost';
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Reload privileges.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;FLUSH PRIVILEGES;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Tạo 1 Table Books&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CREATE TABLE `books` (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,`title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,`author` varchar(50) COLLATE utf8_unicode_ci NOT NULL,`description` varchar(255) COLLATE utf8_unicode_ci NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Để thoát khỏi mysql gõ lệnh
+exit;&lt;/p&gt;
+&lt;h4 id=&quot;432-upload-source-code&quot;&gt;4.3.2. Upload source code&lt;/h4&gt;
+&lt;p&gt;Có nhiều cách để đẩy source code lên hosting, có nhiều cách để upload source code lên hosting. Với 1 VPS thì sẽ không có trang &lt;strong&gt;Admin Panel&lt;/strong&gt; để truy cập file manager để upload source code. Có thể sử dụng ftp (&lt;strong&gt;File Transfer Protocol&lt;/strong&gt;), &lt;strong&gt;git&lt;/strong&gt;, &lt;strong&gt;eXtplorer&lt;/strong&gt; (Trình quản lý file cho hosting tương tự file manager).&lt;/p&gt;
+
+&lt;p&gt;Trong bài viết này tôi sử dụng git. Để clone 1 repo sử dụng lênh &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;git clone urlrepo&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Để ví dụ 1 ứng dụng web quản lý sách đơn giản. Tôi sẽ clone repo &lt;a href=&quot;https://github.com/tuanictu97/mvc-php-example&quot;&gt;mvc-php-example&lt;/a&gt;&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/php/public_html
+git clone https://github.com/tuanictu97/mvc-php-example.git &lt;span class=&quot;nb&quot;&gt;.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Hà Anh TTuấn</name></author><category term="cloud computing" /><category term="vultr" /><category term="vps" /><category term="lemp" /><summary type="html">Trong bài này tôi sẽ trình bày về sự hiểu biết của mình về (Cloud Computing) . Cụ thể hơn trong bài viết này tôi sẽ tìm hiểu về dịch vụ cho thuê cơ sở hạ tầng của Vultr (Infrastructure Cloud) &amp;amp; Cài đặt cái gói (LEMP Stack) để triển khai 1 ứng dụng website chạy trên VPS (Virtual Private Server). 1. Các yêu cầu cần thiết Một tài khoản Vultr đã kích hoạt thanh toán. Công cụ: Webserver: Nginx Terminal/Putty FTP, FileZilla Client Git IDE: Intelli IDEA hoặc Visual Studio Code Ngôn ngữ lập trình: PHP, Node.JS Database: Mariadb (MySQL), MongoDb Hệ điều hành: Centos 7 2. Giới thiệu về Vultr Vultr là nhà cung cấp dịch vụ VPS Server, Cloud Server với 100% phần cứng SSD, 16 datacenter location. Ưu điểm của Vultr là giá rẻ, hiệu năng cao và cài đặt dễ dàng, nhanh chóng. 2.1. Tổng quan về Vultr Vultr, được thành lập vào năm 2014, đang thực hiện sứ mệnh trao quyền cho các nhà phát triển và doanh nghiệp bằng cách đơn giản hóa việc triển khai cơ sở hạ tầng thông qua nền tảng đám mây tiên tiến. Vultr có vị trí chiến lược trong 16 trung tâm dữ liệu trên toàn cầu và cung cấp việc cung cấp dịch vụ đám mây: public cloud, storage, … Sự khác biệt: Geographic Footprint: Vultr có 16 Datacenter tại 16 thành phố giải rác trên thế giới. Điều này sẽ cung cấp các dịch vụ đám mây gần bạn nhất. One Click Apps: Nhanh chóng khởi tạo các ứng dụng dễ dàng, đơn giản chỉ bằng một cú nhấp chuột. Hỗ trợ các ứng dụng như: WordPress, Prestashop, Magento, Joomla, Docker, Gitlab, Drupal, Cpanel (có tính phí bản quyền), LAMP, LEMP, Mediawiki, Minecraff, NextCloud, OpenLiteSpeed, OpenVPN, ownCloud, Plesk Onyx, Webmin. Full Resource Control: Được cung cấp tài khoản root/administrator để quản lý resource. Upload ISO / Mount ISO: Tạo các tùy chọn OS, hầu như không giới hạn bằng cách tải lên file ISO và cài đặt OS tùy chỉnh đó. Linux, Windows and BSD: Vultr thực sự hỗ trợ một loạt các bản phân phối Linux, Windows và BSD phổ biến. No Long Term Contracts: Thanh toán bằng giờ sử dụng. 2.2. Công nghệ của Vultr Vultr cung cấp 4 dịch vụ chính: Cloud Compute: cung cấp dịch vụ thuê máy chủ ảo sử dụng CPU Intel và 100% máy chủ sử dụng SSD. Dedicated Cloud: Dedicated server là một loại lưu trữ trên internet mà người sử dụng có thể thuê toàn bộ một máy chủ, không hề chia sẻ với bất cứ ai. Bare Metal: là dịch vụ dedicated server. Nhưng được triển khai trên nền tảng cloud của Vultr nên thừa hưởng những tính năng như: thanh toán theo giờ, nâng cấp mở rộng, API và hỗ trợ nhiều location khác nhau. Block Storage: Lưu trữ nhanh và có thể lưu trữ được hỗ trợ bởi SSD với dung lượng lên tới 10TB. 3. Triển khai dịch vụ Vultr có trang dashboard để quản lý cũng như giám sát tài nguyên sử dụng các dịch vụ đang sử dụng. 3.1. Triển khai mới dịch vụ Để triển khai 1 dịch vụ trên Vultr truy cập vào tab deloy (dấu +) hoặc tại đây. Tiến hành chọn dịch vụ sử dụng Tiếp theo chọn Server Location Sau đó chọn Server Type. Trong phần Server Type sẽ cho phép chọn OS hoặc chọn Application. Tiếp theo sẽ chọn Server Size. Trong phần Server Size sẽ cho phép chọn các plan phù hợp với nhu cầu sử dụng. Cuối cùng thiết lập các Additional Features(Enable IPv6, Enable Private Networking), Startup Script , SSH Keys, Server Hostname &amp;amp; Label và nhấn Deloy Now để tạo mới 1 dịch vụ. 3.2. Nâng cấp dịch vụ Trong trường hợp muốn nâng cấp về tài nguyên như: RAM, CPU, Storage, IP Public… Tại trang quản lý của Vultr sẽ cho phép nâng cấp plan đang sử dụng để thuê thêm tài nguyên hoặc thuê thêm IP Public. Chọn plan cần nâng cấp, chọn gói và nhấn Upgrade để nâng cấp dịch vụ. Vì Vultr tính tiền theo giờ thế nên nó sẽ tính tiền plan mới khi mình upgrade thành công. 3.3. Xóa bỏ 1 dịch vụ Để hủy 1 dịch vụ trên Vultr cần phải truy cập trang quản lý, Chọn dịch vụ nhấn ký tự (…) và chọn Server destroy. Nhấn xác nhận quá trình destroy khá nhanh khoảng 3p đã hủy thành công 1 dịch vụ. 4. Triển khai ứng dụng web Trong bài viết này tôi sẽ cài LEMP Stack trên hệ điều hành Centos. Và đẩy source lên trên server và tiến hành chạy 1 ứng dụng web. Thường khi chúng ta sử dụng hosting của các nhà cung cấp dịch vụ như tenten, z.com… thường sẽ có trang dashboard để quản lý tài nguyên, source code website. Họ sử dụng control panel để tạo ra admin panel cho người dùng sử dụng. Hiện tại có khá nhiều control panel như: Cpanel, CWP(Control Web Page) Control Panel, Sentora, VestaCP, Webuzo, ISPConfig, VirtualMin, Plesk, DirectAdmin, … Bản chất các control này sẽ cài các gói LEMP (Linux, Engine x, Mysql, PHP) hoặc LAMP (Linux, Apache, Mysql, PHP) để có thể tạo ra môi trường để source code website có thể chạy được. Các nhà cung cấp hosting sẽ cấu hình và tạo ra 1 control admin panel để giúp người dùng sử dụng mà không cần biết cấu hình như thế nào. Trong trường hợp này tôi sử dụng 1 dịch vụ cơ sở hạ tầng của Vultr cung cấp là: 1 server Centos 7 - Ram 512MB, 10GB SSD, 0.5TB băng thông. Để có thể chạy 1 ứng dụng web tôi cần phải cài gói LAMP hoặc LEMP và đẩy source code của tôi lên server. 4.1. Cài đặt LEMP (Nginx, MySQL, PHP) LEMP server là một server chạy Linux, Nginx (đọc là Engine x), MySql và PHP (hoặc Perl/Python). Nó tương tự như LAMP server ngoại trừ việc web server nền tảng được giám sát bằng Nginx thay vì Apache. Cài đặt nginx Thêm CentOS 7 EPEL repository sudo yum install epel-release Cài đặt nginx trên Centos 7 sudo yum install nginx Khởi chạy nginx sudo systemctl start nginx Nếu virtual private của bạn đang sử dụng firewall, run câu lệnh sau để cho phép HTTP và HTTPS traffic: sudo firewall-cmd --permanent --zone=public --add-service=http sudo firewall-cmd --permanent --zone=public --add-service=https sudo firewall-cmd --reload Để kiểm tra nginx hoạt động hay chưa hãy kiểm tra bằng cách truy cập vào public IP trên webbrowser. http://server_domain_name_or_IP/ Nếu nhìn thấy giao diện mặc định CentOS 7 Nginx web page thì đã cài thành công nginx. Cài đặt PHP 7 Bây giờ cài đặt PHP, ở đây tôi cài PHP 7. Tiến hành cài đặt PHP 7 từ remi-php72 rpm repository. ## PHP 5.3 ## yum install -y nginx php-fpm php-common ## PHP 5.4 ## yum --enablerepo=remi install -y nginx php-fpm php-common ## PHP 5.5 ## yum --enablerepo=remi,remi-php55 install -y nginx php-fpm php-common ## PHP 5.6 ## yum --enablerepo=remi,remi-php56 install -y nginx php-fpm php-common ## PHP 7.0 ## yum --enablerepo=remi,remi-php70 install -y nginx php-fpm php-common ## PHP 7.1 ## yum --enablerepo=remi,remi-php71 install -y nginx php-fpm php-common ## PHP 7.2 ## yum --enablerepo=remi,remi-php72 install -y nginx php-fpm php-common Cài đặt các module php cần thiết. Dùng câu lệnh sau để hiển thị danh sách module có sẵn trong yum repositories. yum --enablerepo=remi-php72 search php Một số module PHP thông dụng: OPcache (php-opcache) – The Zend OPcache provides faster PHP execution through opcode caching and optimization. APCu (php-pecl-apc) – APCu userland caching CLI (php-cli) – Command-line interface for PHP PEAR (php-pear) – PHP Extension and Application Repository framework PDO (php-pdo) – A database access abstraction module for PHP applications MySQL (php-mysqlnd) – A module for PHP applications that use MySQL databases PostgreSQL (php-pgsql) – A PostgreSQL database module for PHP MongoDB (php-pecl-mongo) – PHP MongoDB database driver SQLite (php-pecl-sqlite) – Extension for the SQLite Embeddable SQL Database Engine Memcache (php-pecl-memcache) – Extension to work with the Memcached caching daemon Memcached (php-pecl-memcached) – Extension to work with the Memcached caching daemon GD (php-gd) – A module for PHP applications for using the gd graphics library XML (php-xml) – A module for PHP applications which use XML MBString (php-mbstring) – A module for PHP applications which need multi-byte string handling MCrypt (php-mcrypt) – Standard PHP module provides mcrypt library support Để cài đặt bạn hãy sử dụng lệnh yum --enablerepo=remi,remi-php56 install ten_module. Cài các module php cần thiết sau: yum --enablerepo=remi,remi-php56 install -y php-opcache php-pecl-apcu php-cli php-pear php-pdo php-mysqlnd php-pgsql php-pecl-mongo php-pecl-sqlite php-pecl-memcache php-pecl-memcached php-gd php-mbstring php-mcrypt php-xml Cài đặt MySQL 5.6 (MariaDB) Thêm MariaDB repo Lưu ý: Không cần thực hiện trên CentOS 7. Phiên bản MariaDB trên CentOS 7 hiện nay là 5.5.37 Cài đặt hoặc update MariaDB ## CentOS 7 ## yum install -y mariadb mariadb-server Khởi động MariaDB và tự động chạy khi boot ## CentOS 7 ## systemctl start mariadb.service systemctl enable mariadb.service Cấu hình MariaDB Set (Change) root password Remove anonymous users Disallow root login remotely Remove test database and access to it Reload privilege tables Chạy lệnh sau để cài đặt /usr/bin/mysql_secure_installation Ngay bước đầu tiên bạn sẽ bị hỏi root password, do mới cài đặt nên tất nhiên chưa có password, nhấn Enter để tiếp tục. Output tương tự như sau: NOTE: RUNNING ALL PARTS OF THIS SCRIPT IS RECOMMENDED FOR ALL MariaDB SERVERS IN PRODUCTION USE! PLEASE READ EACH STEP CAREFULLY! In order to log into MariaDB to secure it, we\'ll need the current password for the root user. If you\'ve just installed MariaDB, and you haven\'t set the root password yet, the password will be blank, so you should just press enter here. Enter current password for root (enter for none): OK, successfully used password, moving on... Setting the root password ensures that nobody can log into the MariaDB root user without the proper authorisation. Set root password? [Y/n] y New password: Re-enter new password: Password updated successfully! Reloading privilege tables.. ... Success! By default, a MariaDB installation has an anonymous user, allowing anyone to log into MariaDB without having to have a user account created for them. This is intended only for testing, and to make the installation go a bit smoother. You should remove them before moving into a production environment. Remove anonymous users? [Y/n] y ... Success! Normally, root should only be allowed to connect from \'localhost\'. This ensures that someone cannot guess at the root password from the network. Disallow root login remotely? [Y/n] y ... Success! By default, MariaDB comes with a database named \'test\' that anyone can access. This is also intended only for testing, and should be removed before moving into a production environment. Remove test database and access to it? [Y/n] y - Dropping test database... ... Success! - Removing privileges on test database... ... Success! Reloading the privilege tables will ensure that all changes made so far will take effect immediately. Reload privilege tables now? [Y/n] y ... Success! Cleaning up... All done! If you\'ve completed all of the above steps, your MariaDB installation should now be secure. Thanks for using MariaDB! 4.2. Tạo Block Server Nginx 4.2.1. DNS Domain Để DNS bạn cần truy cập vào trang quản lý DNS của nhà cung cấp domain. Tại đây thêm 1 record Type A: Host record: php, Type: A, Value: địa chỉ ip VPS. Với bản ghi trên sẽ DNS trỏ về subdomain là: php.yourdomain.com 4.2.2. Config Nginx Để DNS có thể trỏ đúng về webser thì ta cần phải thêm 1 block server. Ở Apche2 virtual host được định nghĩa là virtual host còn đối với nginx lại được định nghĩa là block server. Mỗi 1 block server được định nghĩa trong thư mục cd /etc/nginx/conf.d để thêm 1 block server chỉ cần thêm 1 file .conf. Để thêm block server gõ lệnh sau: cd /etc/nginx/conf.d Tạo mới 1 block server .conf nano php.yourdomain.conf Gõ đoạn sau vào file php.yourdomain.conf server { listen 80; server_name yourdomain www.yourdomain; location / { root /home/php/public_html; index index.php index.html index.htm; try_files $uri $uri/ /index.php?q=$uri&amp;amp;$args; } error_page 404 /404.html; location = /404.html { # /home/php/public_html la thu muc chua source code root /home/php/public_html; } error_page 500 502 503 504 /50x.html; location = /50x.html { # /home/php/public_html la thu muc chua source code root /home/php/public_html; } # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000 # location ~ \.php$ { root /home/php/public_html; fastcgi_pass 127.0.0.1:9000; fastcgi_index index.php; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; include fastcgi_params; } } 4.3. Upload source code lên hosting 4.3.1. Tạo MySQL Database Gõ lệnh mysql -u root -p Tạo mới 1 Database mới CREATE DATABASE cloudcomputing_db; Tạo mới user. Lệnh dưới đây sẽ tạo ra 1 user mới là cloudcomputing pass word là cloudcomputing_demo CREATE USER 'cloudcomputing'@'localhost' IDENTIFIED BY 'cloudcomputing_demo'; Phân quyền cho user cloudcomputing GRANT ALL PRIVILEGES ON cloudcomputing_db. * TO 'cloudcomputing'@'localhost'; Reload privileges. FLUSH PRIVILEGES; Tạo 1 Table Books CREATE TABLE `books` (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,`title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,`author` varchar(50) COLLATE utf8_unicode_ci NOT NULL,`description` varchar(255) COLLATE utf8_unicode_ci NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci; Để thoát khỏi mysql gõ lệnh exit; 4.3.2. Upload source code Có nhiều cách để đẩy source code lên hosting, có nhiều cách để upload source code lên hosting. Với 1 VPS thì sẽ không có trang Admin Panel để truy cập file manager để upload source code. Có thể sử dụng ftp (File Transfer Protocol), git, eXtplorer (Trình quản lý file cho hosting tương tự file manager). Trong bài viết này tôi sử dụng git. Để clone 1 repo sử dụng lênh git clone urlrepo. Để ví dụ 1 ứng dụng web quản lý sách đơn giản. Tôi sẽ clone repo mvc-php-example cd /home/php/public_html git clone https://github.com/tuanictu97/mvc-php-example.git .</summary></entry><entry><title type="html">Nginx Amplify – Công cụ giám sát Nginx miễn phí tuyệt vời</title><link href="/2018/01/03/nginx-amplify-cong-cu-giam-sat-nginx-mien-phi-tuyet-voi.html" rel="alternate" type="text/html" title="Nginx Amplify – Công cụ giám sát Nginx miễn phí tuyệt vời" /><published>2018-01-03T00:00:00+00:00</published><updated>2018-01-03T00:00:00+00:00</updated><id>/2018/01/03/nginx-amplify-cong-cu-giam-sat-nginx-mien-phi-tuyet-voi</id><content type="html" xml:base="/2018/01/03/nginx-amplify-cong-cu-giam-sat-nginx-mien-phi-tuyet-voi.html">&lt;p&gt;Nginx Amplify là công cụ tuyệt vời giúp giám sát tình trạng NGINX và Server theo thời gian thực, qua đó giúp phân tích và tối ưu các ứng dụng hoạt động dựa trên NGINX.&lt;/p&gt;
+
+&lt;p&gt;Đặc biệt, với bản cập nhật mới nhất, Nginx Amplify theo dõi toàn bộ hệ thống cài đặt LEMP Stack – Linux, Nginx, PHP-FPM và cả MySQL.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/nginx-amplify.jpg&quot; alt=&quot;Nginx Amplify&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Công cụ hoạt động trên nền tảng điện toán đám mây, được cài đặt thông qua một module của Nginx kết nối với API cung cấp miễn phí bởi Nginx.com, giúp bạn dễ dàng theo dõi hoạt động của hệ thống cũng như chủ động xác định các vấn đề:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Hiển thị trực quan, chính xác dễ hiểu thông qua số liệu, biểu đồ tình trạng server: hoạt động CPU, RAM, bộ nhớ ổ đĩa, băng thông…&lt;/li&gt;
+  &lt;li&gt;Cung cấp các lời khuyên và gợi ý thông minh nhằm cải thiện và tối ưu hóa hiệu suất Nginx.&lt;/li&gt;
+  &lt;li&gt;Nhận thông báo qua mail khi có lỗi xảy ra trong quá trình vận hành của các ứng dụng cũng như hỗ trợ xác định vấn đề phát sinh ở đâu…
+Dự đoán về khả năng và hiệu suất hoạt động của các ứng dụng.&lt;/li&gt;
+  &lt;li&gt;Tích hợp và theo dõi nhiều hệ thống chạy Nginx chỉ trong 1 tài khoản.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Toàn bộ thông tin được hiển thị trên website https://amplify.nginx.com, theo dõi rất thuận tiện. Nếu bạn đang sử dụng webserver Nginx, nên cài đặt thêm công cụ này nha.&lt;/p&gt;
+
+&lt;h3 id=&quot;1-cài-đặt-nginx-amplify&quot;&gt;1. Cài đặt Nginx Amplify&lt;/h3&gt;
+&lt;p&gt;Yêu cầu hệ thống cho Nginx Amplify:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Chỉ hoạt động trên hệ điều hành Linux, cụ thể:
+    &lt;ul&gt;
+      &lt;li&gt;RHEL/CentOS/OEL 6 và RHEL/CentOS/OEL 7&lt;/li&gt;
+      &lt;li&gt;Ubuntu 12.04, 14.04, 16.04, 17.04, 17.10&lt;/li&gt;
+      &lt;li&gt;Debian 7, 8, 9&lt;/li&gt;
+      &lt;li&gt;Amazon Linux 2017.09, Gentoo Linux (phiên bản Experimental Ebuild)&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Chỉ hoạt động với Python 2.6, 2.7 và chưa hỗ trợ Python 3.0.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;11-đăng-kí-tài-khoản-nginx-amplify&quot;&gt;1.1. Đăng kí tài khoản Nginx Amplify&lt;/h4&gt;
+&lt;p&gt;Làm theo các bước sau để đăng kí tài khoản.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Truy cập trang đăng kí &lt;a href=&quot;https://amplify.nginx.com/signup/&quot;&gt;Amplify Sign Up&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Điền đầy đủ thông tin và chấp nhận Terms of Service rồi click Sign Up&lt;/li&gt;
+  &lt;li&gt;Tại cửa sổ tiếp theo, bạn cung cấp thêm một số thông tin về bản thân để Nginx support được tốt hơn.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Như vậy, bạn đã hoàn tất đăng kí. Lưu ý, Nginx Amplify sẽ bắt đầu giám sát hệ thống của bạn khi và chỉ khi bạn cài đặt thành công Amplify Agent trên mỗi server và kết nối thông qua API.&lt;/p&gt;
+
+&lt;h4 id=&quot;12-cài-đặt-nginx-amplify-agent-trên-hệ-thống&quot;&gt;1.2. Cài đặt NGINX Amplify Agent trên hệ thống&lt;/h4&gt;
+&lt;p&gt;Công cụ thu thập dữ liệu về hoạt động hệ thống thông qua việc cài đặt Nginx Amplify Agent.&lt;/p&gt;
+
+&lt;p&gt;Click vào biểu tượng +New System góc trên bên trái sau khi login bạn sẽ thấy hướng dẫn cài đặt Agent lên hệ thống của mình. Ví dụ như trong hình:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/install-nginx-amplify-agent.png&quot; alt=&quot;Install Amplify Nginx&quot; /&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Kết nối SSH đến server&lt;/li&gt;
+  &lt;li&gt;Sử dụng curl hoặc wget để download script install (trước đó nên chuyển về thư mục gốc cd /root)&lt;/li&gt;
+  &lt;li&gt;Chạy lệnh cài đặt Amplify Agent&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Nếu không có vấn đề gì xảy ra, bạn sẽ nhận được thông báo cài đặt thành công như bên dưới:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/installed-amplify-agent.png&quot; alt=&quot;Install Amplify Nginx&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Bạn chờ 1 vài phút sẽ thấy hệ thống hiển thị trên khu vực Systems và các đồ thị ở mục Graphs. Giao diện Nginx Amplify sẽ trông giống như ảnh ở phần 2.&lt;/p&gt;
+
+&lt;p&gt;Để hiển đầy đủ các thông số nâng cao, bạn cần cấu hình thêm Stub Status, Log Format và MySQL metrics. Để thay đổi Hostname thủ công, bạn hãy edit file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/etc/amplify-agent/agent.conf&lt;/code&gt; rồi restart lại agent:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;service amplify-agent restart
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;2-cài-đặt-nâng-cao&quot;&gt;2. Cài đặt nâng cao&lt;/h3&gt;
+&lt;h4 id=&quot;21-thông-số-stub-status&quot;&gt;2.1. Thông số Stub Status&lt;/h4&gt;
+&lt;p&gt;Quay trở lại website, nhấn nút Continue để đến bước 2, cấu hình &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stub_status&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/config-stub_status.png&quot; alt=&quot;Install Amplify Nginx&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Bạn cần chỉnh sửa cấu hình Nginx domain .conf thủ công theo như hướng dẫn rồi reload Nginx để áp dụng:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;nginx &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; reload
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Bước này có thể phát sinh lỗi và tốn thời gian nhất, để kiểm tra cấu hình stub_status chuẩn, bạn có thể chạy curl đến localhost như sau là được:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;curl http://localhost/nginx_status
+Active connections: 2
+server accepts handled requests
+ 344014 344014 661581
+Reading: 0 Writing: 1 Waiting: 1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h4 id=&quot;22-thông-số-log&quot;&gt;2.2. Thông số Log&lt;/h4&gt;
+&lt;p&gt;Bạn cần &lt;a href=&quot;https://amplify.nginx.com/docs/guide-metrics-and-metadata.html#additional-nginx-metrics&quot;&gt;cấu hình nâng cao Log Format&lt;/a&gt; để hiển thị đầy đủ các thống số Nginx.&lt;/p&gt;
+
+&lt;p&gt;Cụ thể, cấu hình log_format main_ext trong Nginx:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;user  nginx&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+worker_processes  1&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+worker_rlimit_nofile 260000&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+error_log  /var/log/nginx/error.log warn&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+pid        /var/run/nginx.pid&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+events &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+	worker_connections  2048&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	accept_mutex off&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	accept_mutex_delay 200ms&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	use epoll&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;#multi_accept on;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+http &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+	include       /etc/nginx/mime.types&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	default_type  application/octet-stream&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        log_format  main_ext  &lt;span class=&quot;s1&quot;&gt;'$remote_addr - $remote_user [$time_local] &quot;$request&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'$status $body_bytes_sent &quot;$http_referer&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'&quot;$host&quot; sn=&quot;$server_name&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'rt=$request_time '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'ua=&quot;$upstream_addr&quot; us=&quot;$upstream_status&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'ut=&quot;$upstream_response_time&quot; ul=&quot;$upstream_response_length&quot; '&lt;/span&gt;
+                      &lt;span class=&quot;s1&quot;&gt;'cs=$upstream_cache_status'&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	log_format  main  &lt;span class=&quot;s1&quot;&gt;'$remote_addr - $remote_user [$time_local] &quot;$request&quot; '&lt;/span&gt;
+	              &lt;span class=&quot;s1&quot;&gt;'$status $body_bytes_sent &quot;$http_referer&quot; '&lt;/span&gt;
+	              &lt;span class=&quot;s1&quot;&gt;'&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+	&lt;span class=&quot;c&quot;&gt;#Disable IFRAME&lt;/span&gt;
+	add_header X-Frame-Options SAMEORIGIN&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	
+	&lt;span class=&quot;c&quot;&gt;#Prevent Cross-site scripting (XSS) attacks&lt;/span&gt;
+	add_header X-XSS-Protection &lt;span class=&quot;s2&quot;&gt;&quot;1; mode=block&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	
+	&lt;span class=&quot;c&quot;&gt;#Prevent MIME-sniffing&lt;/span&gt;
+	add_header X-Content-Type-Options nosniff&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	
+	access_log  off&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	sendfile on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	tcp_nopush on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	tcp_nodelay off&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	types_hash_max_size 2048&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	server_tokens off&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	server_names_hash_bucket_size 128&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_max_body_size 0&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_body_buffer_size 256k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_body_in_file_only off&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_body_timeout 60s&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_header_buffer_size 256k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	client_header_timeout  20s&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	large_client_header_buffers 8 256k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	keepalive_timeout 10&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	keepalive_disable msie6&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	reset_timedout_connection on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	send_timeout 60s&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	
+	&lt;span class=&quot;nb&quot;&gt;gzip &lt;/span&gt;on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_static on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_disable &lt;span class=&quot;s2&quot;&gt;&quot;msie6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_vary on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_proxied any&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_comp_level 6&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_buffers 16 8k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_http_version 1.1&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	gzip_types text/plain text/css application/json text/javascript application/javascript text/xml application/xml application/xml+rss&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	include /etc/nginx/conf.d/&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.conf&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;– Chỉnh sửa log cho từng domain lưu trong &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/etc/nginx/conf.d&lt;/code&gt;, ví dụ:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;access_log /home/kazeuraki.net/logs/access.log main_ext&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+error_log /home/kazeuraki.net/logs/error.log warn&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+error_log /home/kazeuraki.net/logs/nginx_error.log warn&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Xong bạn khởi động lại Nginx &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;service nginx restart&lt;/code&gt;&lt;/p&gt;
+&lt;h4 id=&quot;23-thông-số-mysql&quot;&gt;2.3. Thông số MySQL&lt;/h4&gt;
+&lt;p&gt;Để thống kê số liệu MySQL, Nginx Amplify cần được kết nối vào hệ thống cơ sở dữ liệu. Tạo user MySQL: bạn có thể sử dụng user cũ(root/admin…) hoặc tạo user mới bằng câu lệnh trên MySQL.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# mysql -u root -p&lt;/span&gt;
+CREATE USER &lt;span class=&quot;s1&quot;&gt;'amplify-agent'&lt;/span&gt;@&lt;span class=&quot;s1&quot;&gt;'localhost'&lt;/span&gt; IDENTIFIED BY &lt;span class=&quot;s1&quot;&gt;'xxxxxx'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Kiểm tra user có thể truy cập thông số MySQL&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# mysql -u amplify-agent -p&lt;/span&gt;
+show global status&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Một loạt thông số hiện ra là OK
+| Variable_name   |      Value      |
+|———-|:————-:|
+| Aborted_clients |  0 |
+| … |    …   |
+| 452 rows in set (0.00sec) |  |&lt;/p&gt;
+
+&lt;p&gt;Cập nhật Amplify Agent lên phiên bản mới nhất.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## Đối với CentOS/Red Hat&lt;/span&gt;
+yum update nginx-amplify-agent &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Đối với Ubuntu/Debian&lt;/span&gt;
+apt-get update
+apt-get &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;nginx-amplify-agent
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Chỉnh sửa cấu hình Amplify Agent giống như dưới:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# nano /etc/amplify-agent/agent.conf&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;extensions]
+phpfpm &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; True
+mysql &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; True
+
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;mysql]
+&lt;span class=&quot;c&quot;&gt;#host =&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;#port =&lt;/span&gt;
+unix_socket &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; /var/lib/mysql/mysql.sock
+user &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; amplify-agent
+password &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; amplify-agent
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Trong đó:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;user và password: sử dụng user đã kiểm tra bước trên&lt;/li&gt;
+  &lt;li&gt;unix_socket: Socket của MySQL, tùy hệ thống bạn quy định.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Khởi động lại Amplify Agent&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# service amplify-agent restart&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# service nginx restart&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;3-sử-dụng-nginx-amplify&quot;&gt;3. Sử dụng Nginx Amplify&lt;/h3&gt;
+&lt;p&gt;Với cấu hình nâng cao Amplify, bạn sẽ theo dõi được toàn bộ các thông số về hệ thống LEMP.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/amplify-graphs.png&quot; alt=&quot;Amplify Graphs&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;31-graphs--đồ-thị-giám-sát&quot;&gt;3.1. Graphs – Đồ thị giám sát&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/nginx-amplify-graphs.png&quot; alt=&quot;Amplify Graphs&quot; /&gt;
+Tại trang Graphs, các bạn sẽ thấy các đồ thị về hệ thống và Nginx server, bao gồm:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;System&lt;/strong&gt;: CPU Usage %, Load Average, Memory, Network Traffic, Disk Usage, Disk I/O, Disk Latency, CPU Usage I/O, Disk IOPS, Swap.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Nginx&lt;/strong&gt;: Connections/s, Requests/s, Current Connections, Current Requests, HTTP Errors, HTTP Version, Workers, File Descriptors, CPU Usage %, Memory Usage, Traffic, Disk I/O, Request Time, Upstream Response Time, Disk Buffered, Upstream Errors.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;32-dashboard--bảng-giám-sát-điều-khiển&quot;&gt;3.2. Dashboard – Bảng giám sát, điều khiển&lt;/h4&gt;
+&lt;p&gt;Tại trang NGINX Amplify Dashboards, bạn có thể tùy biến cấu hình biểu đồ để thiết lập báo cáo theo các số liệu tùy chọn từ các số liệu đã thu thập. Bên cạnh đó, bạn có thể thiết lập báo cáo và giám sát Nginx trên 1 server cụ thể hoặc một nhóm các server, cũng như có thể theo dõi 1 service nhỏ hoặc toàn bộ ứng dụng đã cài đặt.&lt;/p&gt;
+
+&lt;p&gt;Dưới đây, mình sẽ ví dụ thiết lập 1 biểu đồ cơ bản báo cáo về tình trạng của HTTP &lt;a href=&quot;https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_Error&quot;&gt;401 Unauthorized&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Tại menu thả xuống của Dashboards, chọn Create Dashboard. Chọn Add Graph (góc trên bên phải) tại vùng làm việc mới hiện ra. Tại bảng &lt;strong&gt;Add graph to dashboard&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Title&lt;/strong&gt;: Điền tên cho biểu đồ, ví dụ 401 Errors&lt;/li&gt;
+  &lt;li&gt;C&lt;strong&gt;hose metric to display&lt;/strong&gt;: Chọn các số liệu liên quan từ menu thả xuống, trong trường hợp này là &lt;strong&gt;nginx.http.status.4xx&lt;/strong&gt;. Trong các số liệu của Nginx Amplify, bạn có thể chọn system cho các số liệu về hệ thống và nginx cho số liệu về NGINX server.&lt;/li&gt;
+  &lt;li&gt;Chọn hệ thống Nginx muốn giám sát từ danh sách thả xuống của Click to select NGINX (có thể chọn nhiều hệ thống) Để lọc số liệu chọn &lt;strong&gt;Apply Filter&lt;/strong&gt;. Menu &lt;strong&gt;Click to select filter key&lt;/strong&gt; xuất hiện chọn giá trị lọc $status cho HTTP status code. Menu bên cạnh &lt;strong&gt;Type or select filter value&lt;/strong&gt; hiện ra gõ 401 và chọn Use 401 as value. Kết quả cuối cùng thành &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$status ~ 401&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/add-graph-to-dashboard.png&quot; alt=&quot;Add Graphs To Dashboard&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;33-analyzer--báo-cáo-về-thiết-lập-hệ-thống&quot;&gt;3.3. Analyzer – Báo cáo về thiết lập hệ thống&lt;/h4&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/amplify-analyzer.png&quot; alt=&quot;Add Graphs To Dashboard&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Khi bạn cài đặt phần mềm lên hệ thống, Nginx Amplify sẽ phân tích cấu hình cài đặt và thiết lập báo cáo chi tiết về thông tin trạng thái và các lời khuyên về cấu hình, trong đó:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Status information&lt;/strong&gt;: Tình trạng hiện tại về NGINX của bạn, bao gồm phiên bản, tổng quan về cấu hình (bao gồm cả các modules), các khuyến cáo bảo mật, máy chủ ảo và thông tin SSL/TLS.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Static analysis&lt;/strong&gt;: một phân tích về cấu hình của bạn mà cung cấp các khuyến nghị để cải thiện hiệu suất, bảo mật và độ tin cậy của các ứng dụng Nginx.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Khi bạn cài đặt Nginx Amplify Agent lên hệ thống, bạn nên xem xét tất cả các phần của báo cáo, bao gồm:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Version&lt;/strong&gt; và Overview: tìm kiếm và chỉ ra tất cả các hiểm họa nghi ngờ.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Security&lt;/strong&gt;: đánh giá và chỉ ra các khuyến cáo về bảo mật có thể áp dụng&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Virtual servers&lt;/strong&gt;: Xem xét lại các máy chủ ảo để xem chi tiết cấu hình cũng như thông tin SSL/TLS.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;SSL&lt;/strong&gt;: kiểm tra tình trạng chứng chỉ SSL, đảm bảo vẫn trong thời hạn.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Static analysis&lt;/strong&gt;: Kiểm tra và cảnh báo bất kì mối nguy hiểm nào.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;34-alerts--cảnh-báo-hệ-thống&quot;&gt;3.4. Alerts – Cảnh báo hệ thống&lt;/h4&gt;
+&lt;p&gt;Để thực sự giám sát Nginx theo thời gian thực, Nginx Amplify cung cấp bạn công cụ Alerts để cảnh báo bạn khi giá trị của 1 số liệu cụ thể vượt quá mức bạn đề ra. Trong một số trường hợp, Alerts giúp cảnh báo trước khi vấn đề xảy ra thực tế đối với người dùng, đảm bảo rằng bạn không phải là người cuối cùng được biết khi có vấn đề.&lt;/p&gt;
+
+&lt;p&gt;Chú ý:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Bạn không thể tạo Alerts dựa trên số liệu tổng hoặc số liệu trung bình, chỉ có thể dựa trên số liệu chính xác.&lt;/li&gt;
+  &lt;li&gt;Mặc định, Alerts không lọc theo hostname nên thông thường Alerts cảnh báo bạn khi số liệu của cả hệ thống vượt quá mức đề ra. Để cảnh báo cụ thể, bạn cần chỉ định hostname khi cấu hình Alerts.&lt;/li&gt;
+  &lt;li&gt;Mỗi tài khoản có 1 Alerts mặc định là cảnh báo khi Nginx Amplify service ngừng hơn 2 phút.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Để tạo 1 cảnh báo mới, chọn thanh Add new alert ở cuối trang Alerts. Giao diện Create New Alerts hiện ra:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Chose metric to alert&lt;/strong&gt;: Chọn số liệu cần được cảnh báo&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Over period of&lt;/strong&gt;: cảnh báo nếu số liệu vượt quá trong ngưỡng thời gian&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Threshold&lt;/strong&gt;: Ngưỡng số liệu cần cảnh báo, có các giá trị &amp;lt; = &amp;gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Systems&lt;/strong&gt;: Cảnh báo áp dụng cho toàn hệ thống hay 1 server cụ thể&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Email&lt;/strong&gt;: Điền email nhận thông báo khi Alerts bị kích hoạt. Nếu email này chưa từng được sử dụng với Nginx Amplify thì hệ thống sẽ gửi 1 mail xác nhận.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ví dụ về thiết lập cảnh báo khi Inbound Traffic vượt quá 1 Mbps trong khoảng thời gian trên 2 phút.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/amplify-alerts.png&quot; alt=&quot;Add Graphs To Dashboard&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Như vậy, qua bài viết, mình đã cung cấp các bạn tổng quan về Nginx Amplify cũng như hướng dẫn cài đặt, sử dụng. Mong rằng qua đó các bạn có thể sử dụng Nginx Amplify một cách tốt nhất.&lt;/p&gt;
+
+&lt;p&gt;Tham khảo thêm hướng dẫn sử dụng Amplify &lt;a href=&quot;https://github.com/nginxinc/nginx-amplify-doc/blob/master/amplify-guide.md&quot;&gt;tại đây&lt;/a&gt;.&lt;/p&gt;</content><author><name>Hà Anh TTuấn</name></author><category term="nginx" /><category term="lemp" /><summary type="html">Nginx Amplify là công cụ tuyệt vời giúp giám sát tình trạng NGINX và Server theo thời gian thực, qua đó giúp phân tích và tối ưu các ứng dụng hoạt động dựa trên NGINX. Đặc biệt, với bản cập nhật mới nhất, Nginx Amplify theo dõi toàn bộ hệ thống cài đặt LEMP Stack – Linux, Nginx, PHP-FPM và cả MySQL. Công cụ hoạt động trên nền tảng điện toán đám mây, được cài đặt thông qua một module của Nginx kết nối với API cung cấp miễn phí bởi Nginx.com, giúp bạn dễ dàng theo dõi hoạt động của hệ thống cũng như chủ động xác định các vấn đề: Hiển thị trực quan, chính xác dễ hiểu thông qua số liệu, biểu đồ tình trạng server: hoạt động CPU, RAM, bộ nhớ ổ đĩa, băng thông… Cung cấp các lời khuyên và gợi ý thông minh nhằm cải thiện và tối ưu hóa hiệu suất Nginx. Nhận thông báo qua mail khi có lỗi xảy ra trong quá trình vận hành của các ứng dụng cũng như hỗ trợ xác định vấn đề phát sinh ở đâu… Dự đoán về khả năng và hiệu suất hoạt động của các ứng dụng. Tích hợp và theo dõi nhiều hệ thống chạy Nginx chỉ trong 1 tài khoản. Toàn bộ thông tin được hiển thị trên website https://amplify.nginx.com, theo dõi rất thuận tiện. Nếu bạn đang sử dụng webserver Nginx, nên cài đặt thêm công cụ này nha. 1. Cài đặt Nginx Amplify Yêu cầu hệ thống cho Nginx Amplify: Chỉ hoạt động trên hệ điều hành Linux, cụ thể: RHEL/CentOS/OEL 6 và RHEL/CentOS/OEL 7 Ubuntu 12.04, 14.04, 16.04, 17.04, 17.10 Debian 7, 8, 9 Amazon Linux 2017.09, Gentoo Linux (phiên bản Experimental Ebuild) Chỉ hoạt động với Python 2.6, 2.7 và chưa hỗ trợ Python 3.0. 1.1. Đăng kí tài khoản Nginx Amplify Làm theo các bước sau để đăng kí tài khoản. Truy cập trang đăng kí Amplify Sign Up Điền đầy đủ thông tin và chấp nhận Terms of Service rồi click Sign Up Tại cửa sổ tiếp theo, bạn cung cấp thêm một số thông tin về bản thân để Nginx support được tốt hơn. Như vậy, bạn đã hoàn tất đăng kí. Lưu ý, Nginx Amplify sẽ bắt đầu giám sát hệ thống của bạn khi và chỉ khi bạn cài đặt thành công Amplify Agent trên mỗi server và kết nối thông qua API. 1.2. Cài đặt NGINX Amplify Agent trên hệ thống Công cụ thu thập dữ liệu về hoạt động hệ thống thông qua việc cài đặt Nginx Amplify Agent. Click vào biểu tượng +New System góc trên bên trái sau khi login bạn sẽ thấy hướng dẫn cài đặt Agent lên hệ thống của mình. Ví dụ như trong hình: Kết nối SSH đến server Sử dụng curl hoặc wget để download script install (trước đó nên chuyển về thư mục gốc cd /root) Chạy lệnh cài đặt Amplify Agent Nếu không có vấn đề gì xảy ra, bạn sẽ nhận được thông báo cài đặt thành công như bên dưới: Bạn chờ 1 vài phút sẽ thấy hệ thống hiển thị trên khu vực Systems và các đồ thị ở mục Graphs. Giao diện Nginx Amplify sẽ trông giống như ảnh ở phần 2. Để hiển đầy đủ các thông số nâng cao, bạn cần cấu hình thêm Stub Status, Log Format và MySQL metrics. Để thay đổi Hostname thủ công, bạn hãy edit file /etc/amplify-agent/agent.conf rồi restart lại agent: service amplify-agent restart 2. Cài đặt nâng cao 2.1. Thông số Stub Status Quay trở lại website, nhấn nút Continue để đến bước 2, cấu hình stub_status Bạn cần chỉnh sửa cấu hình Nginx domain .conf thủ công theo như hướng dẫn rồi reload Nginx để áp dụng: nginx -s reload Bước này có thể phát sinh lỗi và tốn thời gian nhất, để kiểm tra cấu hình stub_status chuẩn, bạn có thể chạy curl đến localhost như sau là được: $ curl http://localhost/nginx_status Active connections: 2 server accepts handled requests 344014 344014 661581 Reading: 0 Writing: 1 Waiting: 1 2.2. Thông số Log Bạn cần cấu hình nâng cao Log Format để hiển thị đầy đủ các thống số Nginx. Cụ thể, cấu hình log_format main_ext trong Nginx: user nginx; worker_processes 1; worker_rlimit_nofile 260000; error_log /var/log/nginx/error.log warn; pid /var/run/nginx.pid; events { worker_connections 2048; accept_mutex off; accept_mutex_delay 200ms; use epoll; #multi_accept on; } http { include /etc/nginx/mime.types; default_type application/octet-stream; log_format main_ext '$remote_addr - $remote_user [$time_local] &quot;$request&quot; ' '$status $body_bytes_sent &quot;$http_referer&quot; ' '&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot; ' '&quot;$host&quot; sn=&quot;$server_name&quot; ' 'rt=$request_time ' 'ua=&quot;$upstream_addr&quot; us=&quot;$upstream_status&quot; ' 'ut=&quot;$upstream_response_time&quot; ul=&quot;$upstream_response_length&quot; ' 'cs=$upstream_cache_status' ; log_format main '$remote_addr - $remote_user [$time_local] &quot;$request&quot; ' '$status $body_bytes_sent &quot;$http_referer&quot; ' '&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;'; #Disable IFRAME add_header X-Frame-Options SAMEORIGIN; #Prevent Cross-site scripting (XSS) attacks add_header X-XSS-Protection &quot;1; mode=block&quot;; #Prevent MIME-sniffing add_header X-Content-Type-Options nosniff; access_log off; sendfile on; tcp_nopush on; tcp_nodelay off; types_hash_max_size 2048; server_tokens off; server_names_hash_bucket_size 128; client_max_body_size 0; client_body_buffer_size 256k; client_body_in_file_only off; client_body_timeout 60s; client_header_buffer_size 256k; client_header_timeout 20s; large_client_header_buffers 8 256k; keepalive_timeout 10; keepalive_disable msie6; reset_timedout_connection on; send_timeout 60s; gzip on; gzip_static on; gzip_disable &quot;msie6&quot;; gzip_vary on; gzip_proxied any; gzip_comp_level 6; gzip_buffers 16 8k; gzip_http_version 1.1; gzip_types text/plain text/css application/json text/javascript application/javascript text/xml application/xml application/xml+rss; include /etc/nginx/conf.d/*.conf; } – Chỉnh sửa log cho từng domain lưu trong /etc/nginx/conf.d, ví dụ: access_log /home/kazeuraki.net/logs/access.log main_ext; error_log /home/kazeuraki.net/logs/error.log warn; error_log /home/kazeuraki.net/logs/nginx_error.log warn; Xong bạn khởi động lại Nginx service nginx restart 2.3. Thông số MySQL Để thống kê số liệu MySQL, Nginx Amplify cần được kết nối vào hệ thống cơ sở dữ liệu. Tạo user MySQL: bạn có thể sử dụng user cũ(root/admin…) hoặc tạo user mới bằng câu lệnh trên MySQL. # mysql -u root -p CREATE USER 'amplify-agent'@'localhost' IDENTIFIED BY 'xxxxxx'; Kiểm tra user có thể truy cập thông số MySQL # mysql -u amplify-agent -p show global status; Một loạt thông số hiện ra là OK | Variable_name | Value | |———-|:————-:| | Aborted_clients | 0 | | … | … | | 452 rows in set (0.00sec) | | Cập nhật Amplify Agent lên phiên bản mới nhất. ## Đối với CentOS/Red Hat yum update nginx-amplify-agent -y ## Đối với Ubuntu/Debian apt-get update apt-get install nginx-amplify-agent Chỉnh sửa cấu hình Amplify Agent giống như dưới: # nano /etc/amplify-agent/agent.conf [extensions] phpfpm = True mysql = True [mysql] #host = #port = unix_socket = /var/lib/mysql/mysql.sock user = amplify-agent password = amplify-agent Trong đó: user và password: sử dụng user đã kiểm tra bước trên unix_socket: Socket của MySQL, tùy hệ thống bạn quy định. Khởi động lại Amplify Agent # service amplify-agent restart # service nginx restart 3. Sử dụng Nginx Amplify Với cấu hình nâng cao Amplify, bạn sẽ theo dõi được toàn bộ các thông số về hệ thống LEMP. 3.1. Graphs – Đồ thị giám sát Tại trang Graphs, các bạn sẽ thấy các đồ thị về hệ thống và Nginx server, bao gồm: System: CPU Usage %, Load Average, Memory, Network Traffic, Disk Usage, Disk I/O, Disk Latency, CPU Usage I/O, Disk IOPS, Swap. Nginx: Connections/s, Requests/s, Current Connections, Current Requests, HTTP Errors, HTTP Version, Workers, File Descriptors, CPU Usage %, Memory Usage, Traffic, Disk I/O, Request Time, Upstream Response Time, Disk Buffered, Upstream Errors. 3.2. Dashboard – Bảng giám sát, điều khiển Tại trang NGINX Amplify Dashboards, bạn có thể tùy biến cấu hình biểu đồ để thiết lập báo cáo theo các số liệu tùy chọn từ các số liệu đã thu thập. Bên cạnh đó, bạn có thể thiết lập báo cáo và giám sát Nginx trên 1 server cụ thể hoặc một nhóm các server, cũng như có thể theo dõi 1 service nhỏ hoặc toàn bộ ứng dụng đã cài đặt. Dưới đây, mình sẽ ví dụ thiết lập 1 biểu đồ cơ bản báo cáo về tình trạng của HTTP 401 Unauthorized Tại menu thả xuống của Dashboards, chọn Create Dashboard. Chọn Add Graph (góc trên bên phải) tại vùng làm việc mới hiện ra. Tại bảng Add graph to dashboard: Title: Điền tên cho biểu đồ, ví dụ 401 Errors Chose metric to display: Chọn các số liệu liên quan từ menu thả xuống, trong trường hợp này là nginx.http.status.4xx. Trong các số liệu của Nginx Amplify, bạn có thể chọn system cho các số liệu về hệ thống và nginx cho số liệu về NGINX server. Chọn hệ thống Nginx muốn giám sát từ danh sách thả xuống của Click to select NGINX (có thể chọn nhiều hệ thống) Để lọc số liệu chọn Apply Filter. Menu Click to select filter key xuất hiện chọn giá trị lọc $status cho HTTP status code. Menu bên cạnh Type or select filter value hiện ra gõ 401 và chọn Use 401 as value. Kết quả cuối cùng thành $status ~ 401. 3.3. Analyzer – Báo cáo về thiết lập hệ thống Khi bạn cài đặt phần mềm lên hệ thống, Nginx Amplify sẽ phân tích cấu hình cài đặt và thiết lập báo cáo chi tiết về thông tin trạng thái và các lời khuyên về cấu hình, trong đó: Status information: Tình trạng hiện tại về NGINX của bạn, bao gồm phiên bản, tổng quan về cấu hình (bao gồm cả các modules), các khuyến cáo bảo mật, máy chủ ảo và thông tin SSL/TLS. Static analysis: một phân tích về cấu hình của bạn mà cung cấp các khuyến nghị để cải thiện hiệu suất, bảo mật và độ tin cậy của các ứng dụng Nginx. Khi bạn cài đặt Nginx Amplify Agent lên hệ thống, bạn nên xem xét tất cả các phần của báo cáo, bao gồm: Version và Overview: tìm kiếm và chỉ ra tất cả các hiểm họa nghi ngờ. Security: đánh giá và chỉ ra các khuyến cáo về bảo mật có thể áp dụng Virtual servers: Xem xét lại các máy chủ ảo để xem chi tiết cấu hình cũng như thông tin SSL/TLS. SSL: kiểm tra tình trạng chứng chỉ SSL, đảm bảo vẫn trong thời hạn. Static analysis: Kiểm tra và cảnh báo bất kì mối nguy hiểm nào. 3.4. Alerts – Cảnh báo hệ thống Để thực sự giám sát Nginx theo thời gian thực, Nginx Amplify cung cấp bạn công cụ Alerts để cảnh báo bạn khi giá trị của 1 số liệu cụ thể vượt quá mức bạn đề ra. Trong một số trường hợp, Alerts giúp cảnh báo trước khi vấn đề xảy ra thực tế đối với người dùng, đảm bảo rằng bạn không phải là người cuối cùng được biết khi có vấn đề. Chú ý: Bạn không thể tạo Alerts dựa trên số liệu tổng hoặc số liệu trung bình, chỉ có thể dựa trên số liệu chính xác. Mặc định, Alerts không lọc theo hostname nên thông thường Alerts cảnh báo bạn khi số liệu của cả hệ thống vượt quá mức đề ra. Để cảnh báo cụ thể, bạn cần chỉ định hostname khi cấu hình Alerts. Mỗi tài khoản có 1 Alerts mặc định là cảnh báo khi Nginx Amplify service ngừng hơn 2 phút. Để tạo 1 cảnh báo mới, chọn thanh Add new alert ở cuối trang Alerts. Giao diện Create New Alerts hiện ra: Chose metric to alert: Chọn số liệu cần được cảnh báo Over period of: cảnh báo nếu số liệu vượt quá trong ngưỡng thời gian Threshold: Ngưỡng số liệu cần cảnh báo, có các giá trị &amp;lt; = &amp;gt; Systems: Cảnh báo áp dụng cho toàn hệ thống hay 1 server cụ thể Email: Điền email nhận thông báo khi Alerts bị kích hoạt. Nếu email này chưa từng được sử dụng với Nginx Amplify thì hệ thống sẽ gửi 1 mail xác nhận. Ví dụ về thiết lập cảnh báo khi Inbound Traffic vượt quá 1 Mbps trong khoảng thời gian trên 2 phút. Như vậy, qua bài viết, mình đã cung cấp các bạn tổng quan về Nginx Amplify cũng như hướng dẫn cài đặt, sử dụng. Mong rằng qua đó các bạn có thể sử dụng Nginx Amplify một cách tốt nhất. Tham khảo thêm hướng dẫn sử dụng Amplify tại đây.</summary></entry><entry><title type="html">Một số thủ thuật tối ưu LEMP server trên Centos</title><link href="/2018/01/02/mot-so-thu-thuat-toi-uu-lemp-server-tren-centos.html" rel="alternate" type="text/html" title="Một số thủ thuật tối ưu LEMP server trên Centos" /><published>2018-01-02T00:00:00+00:00</published><updated>2018-01-02T00:00:00+00:00</updated><id>/2018/01/02/mot-so-thu-thuat-toi-uu-lemp-server-tren-centos</id><content type="html" xml:base="/2018/01/02/mot-so-thu-thuat-toi-uu-lemp-server-tren-centos.html">&lt;p&gt;Sau khi cài đặt xong LEMP trên CentOS, bạn sẽ cần thực hiện một số tùy chỉnh để đảm bảo hệ thống hoạt động nhanh hơn, tăng tốc website. Bên dưới là một số thao tác mình thực hiện mỗi khi cài đặt server.&lt;/p&gt;
+
+&lt;h3 id=&quot;1-kích-hoạt-gzip-compression&quot;&gt;1. Kích hoạt Gzip Compression&lt;/h3&gt;
+&lt;p&gt;Mở file cài đặt nginx&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;nano /etc/nginx/nginx.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Chỉnh phần cài đặt gzip&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;...
+http &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+...
+
+&lt;span class=&quot;c&quot;&gt;# enable gzip compression&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;gzip &lt;/span&gt;on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_disable &lt;span class=&quot;s2&quot;&gt;&quot;msie6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_vary on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_proxied any&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_comp_level 6&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_buffers 16 8k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_http_version 1.1&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# end gzip configuration&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Reload nginx&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo&lt;/span&gt; /etc/init.d/nginx reload
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;2-make-browsers-cache-static-files-on-nginx&quot;&gt;2. Make Browsers Cache Static Files On nginx&lt;/h3&gt;
+&lt;p&gt;Mở file block server mặc định hoặc file custom của bạn&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;nano /etc/nginx/conf.d/default.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Thay đổi cài đặt như bên dưới.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+server &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+        location ~&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;  &lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;jpg|jpeg|png|gif|ico|css|js&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+              expires 365d&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Reload nginx&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo&lt;/span&gt; /etc/init.d/nginx reload
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Trên đây là những thủ thuật để có thể tối ưu LEMP. Chúc các bạn thành công !&lt;/p&gt;</content><author><name>Hà Anh TTuấn</name></author><category term="centos" /><category term="nginx" /><category term="lemp" /><summary type="html">Sau khi cài đặt xong LEMP trên CentOS, bạn sẽ cần thực hiện một số tùy chỉnh để đảm bảo hệ thống hoạt động nhanh hơn, tăng tốc website. Bên dưới là một số thao tác mình thực hiện mỗi khi cài đặt server. 1. Kích hoạt Gzip Compression Mở file cài đặt nginx sudo nano /etc/nginx/nginx.conf Chỉnh phần cài đặt gzip ... http { ... # enable gzip compression gzip on; gzip_disable &quot;msie6&quot;; gzip_vary on; gzip_proxied any; gzip_comp_level 6; gzip_buffers 16 8k; gzip_http_version 1.1; gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript; # end gzip configuration } ... Reload nginx sudo /etc/init.d/nginx reload 2. Make Browsers Cache Static Files On nginx Mở file block server mặc định hoặc file custom của bạn sudo nano /etc/nginx/conf.d/default.conf Thay đổi cài đặt như bên dưới. [...] server { [...] location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ { expires 365d; } [...] } [...] Reload nginx sudo /etc/init.d/nginx reload Trên đây là những thủ thuật để có thể tối ưu LEMP. Chúc các bạn thành công !</summary></entry><entry><title type="html">Một số thủ thuật tối ưu LEMP server trên Ubuntu</title><link href="/2018/01/01/mot-so-thu-thuat-toi-uu-lemp-server-tren-ubuntu.html" rel="alternate" type="text/html" title="Một số thủ thuật tối ưu LEMP server trên Ubuntu" /><published>2018-01-01T00:00:00+00:00</published><updated>2018-01-01T00:00:00+00:00</updated><id>/2018/01/01/mot-so-thu-thuat-toi-uu-lemp-server-tren-ubuntu</id><content type="html" xml:base="/2018/01/01/mot-so-thu-thuat-toi-uu-lemp-server-tren-ubuntu.html">&lt;p&gt;Trong bài viết này mình sẽ nói về một số thủ thuật để tối ưu LEMP server cho nó hoạt động ổn định, hiệu quả hơn. Không phải tất cả thủ thuật đều tốt, bạn nên sử dụng cẩn thận nhé.&lt;/p&gt;
+
+&lt;h3 id=&quot;1-tự-khởi-động-lại-server-khi-hết-bộ-nhớ-không-nên-sử-dụng&quot;&gt;1. Tự khởi động lại server khi hết bộ nhớ (không nên sử dụng)&lt;/h3&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;nano /etc/sysctl.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Thêm vào dưới cùng 2 dòng sau&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vm.panic_on_oom=1
+kernel.panic=10
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;The vm.panic_on_oom=1 line enables panic on OOM; the kernel.panic=10 line tells the kernel to reboot ten seconds after panicking.&lt;/p&gt;
+&lt;h3 id=&quot;2-tự-động-optimize-mysql-table-hàng-tuần&quot;&gt;2. Tự động optimize MySQL table hàng tuần&lt;/h3&gt;
+&lt;p&gt;Mở file crontab&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;crontab &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Thêm dòng sau vào dưới cùng&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;@weekly mysqlcheck &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;root &lt;span class=&quot;nt&quot;&gt;--password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;lt;your password here&amp;gt; &lt;span class=&quot;nt&quot;&gt;-A&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Bạn có thể tự chạy mysqlcheck trước để xem câu lệnh đúng chưa.&lt;/p&gt;
+&lt;h3 id=&quot;3-kích-hoạt-gzip-compression&quot;&gt;3. Kích hoạt Gzip Compression&lt;/h3&gt;
+&lt;p&gt;Mở file cài đặt nginx&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;nano /etc/nginx/nginx.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Chỉnh phần cài đặt gzip&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# enable gzip compression&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;gzip &lt;/span&gt;on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_disable &lt;span class=&quot;s2&quot;&gt;&quot;msie6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_vary on&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_proxied any&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_comp_level 6&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_buffers 16 8k&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_http_version 1.1&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# end gzip configuration&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Reload nginx&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo /etc/init.d/nginx reload
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;4-make-browsers-cache-static-files-on-nginx&quot;&gt;4. Make Browsers Cache Static Files On nginx&lt;/h3&gt;
+&lt;p&gt;Thủ thuật này bắt trình duyệt sẽ phải lưu cache các file tĩnh (images, CSS và Javascript) và load lại chúng thay vì gửi yêu cầu tới server tải lại.&lt;/p&gt;
+
+&lt;p&gt;Mở file block server mặc định hoặc file custom của bạn.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;nano /etc/nginx/sites-available/default
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Thay đổi cài đặt như bên dưới.&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+server &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+        location ~&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;  &lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;jpg|jpeg|png|gif|ico|css|js&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+              expires 365d&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;...]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Trên đây là những thủ thuật để có thể tối ưu LEMP. Chúc các bạn thành công !&lt;/p&gt;</content><author><name>Hà Anh TTuấn</name></author><category term="ubuntu" /><category term="nginx" /><category term="lemp" /><summary type="html">Trong bài viết này mình sẽ nói về một số thủ thuật để tối ưu LEMP server cho nó hoạt động ổn định, hiệu quả hơn. Không phải tất cả thủ thuật đều tốt, bạn nên sử dụng cẩn thận nhé. 1. Tự khởi động lại server khi hết bộ nhớ (không nên sử dụng) sudo nano /etc/sysctl.conf Thêm vào dưới cùng 2 dòng sau vm.panic_on_oom=1 kernel.panic=10 The vm.panic_on_oom=1 line enables panic on OOM; the kernel.panic=10 line tells the kernel to reboot ten seconds after panicking. 2. Tự động optimize MySQL table hàng tuần Mở file crontab crontab -e Thêm dòng sau vào dưới cùng @weekly mysqlcheck -o --user=root --password=&amp;lt;your password here&amp;gt; -A Bạn có thể tự chạy mysqlcheck trước để xem câu lệnh đúng chưa. 3. Kích hoạt Gzip Compression Mở file cài đặt nginx sudo nano /etc/nginx/nginx.conf Chỉnh phần cài đặt gzip # enable gzip compression gzip on; gzip_disable &quot;msie6&quot;; gzip_vary on; gzip_proxied any; gzip_comp_level 6; gzip_buffers 16 8k; gzip_http_version 1.1; gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript; # end gzip configuration Reload nginx sudo /etc/init.d/nginx reload 4. Make Browsers Cache Static Files On nginx Thủ thuật này bắt trình duyệt sẽ phải lưu cache các file tĩnh (images, CSS và Javascript) và load lại chúng thay vì gửi yêu cầu tới server tải lại. Mở file block server mặc định hoặc file custom của bạn. sudo nano /etc/nginx/sites-available/default Thay đổi cài đặt như bên dưới. [...] server { [...] location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ { expires 365d; } [...] } [...] Trên đây là những thủ thuật để có thể tối ưu LEMP. Chúc các bạn thành công !</summary></entry></feed>

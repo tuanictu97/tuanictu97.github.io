@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>/2018/01/01/mot-so-thu-thuat-toi-uu-lemp-server-tren-ubuntu.html</loc>
+<lastmod>2018-01-01T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>/2018/01/02/mot-so-thu-thuat-toi-uu-lemp-server-tren-centos.html</loc>
+<lastmod>2018-01-02T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>/2018/01/03/nginx-amplify-cong-cu-giam-sat-nginx-mien-phi-tuyet-voi.html</loc>
+<lastmod>2018-01-03T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>/2019/08/30/cloud-computing-trien-khai-1-dich-vu-co-so-ha-tang-vultr-trien-khai-ung-dung-website.html</loc>
+<lastmod>2019-08-30T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>/2019/10/01/tim-hieu-devops-va-ap-dung-circle-ci.html</loc>
+<lastmod>2019-10-01T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>/about.html</loc>
+</url>
+<url>
+<loc>/archive.html</loc>
+</url>
+<url>
+<loc>/</loc>
+</url>
+</urlset>
